@@ -48,8 +48,8 @@
 	// }
 
 
-	//let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
-	let USER_ID = 111;
+	let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+	//let USER_ID = 111;
 
 	$(document).ready(function() {
 		init_canvas();
@@ -81,6 +81,7 @@
 	var Circle; //当前圆
 	var status = 1; //当前圆状态
 	var ratioX = bot.width/900,ratioY = bot.height/760;
+	
 	//圆
 	var Circle_1 = {
 		c1: {
@@ -520,7 +521,7 @@
 		dt = setInterval(() => {
 			if (websocket.readyState == 1)
 				sendMSG()
-		}, 0.2);
+		}, 200);
 		x = e.touches[0].pageX - x0;
 		y = e.touches[0].pageY - y0;
 	}
@@ -583,7 +584,7 @@
 	 * websocket连接
 	 */
 	var websocket = null;
-	websocket = new WebSocket('ws://localhost:80/websocket/' + 124)
+	websocket = new WebSocket('ws://localhost:80/websocket/' + USER_ID)
 
 	websocket.onopen = function(e) {
 		console.log('建立连接')
@@ -631,13 +632,13 @@
 					context.beginPath();
 					context.strokeStyle = '#ff0000';
 					context.lineWidth = 2;
-					context.arc(Circle[i].x, Circle[i].y, R + 5, 0, 2 * Math.PI);
+					context.arc(Circle[i].x * ratioX, Circle[i].y * ratioY, R + 5, 0, 2 * Math.PI);
 					context.stroke();
 					setTimeout(function() {
 						context.beginPath();
 						context.strokeStyle = '#000000';
 						context.lineWidth = 2;
-						context.arc(Circle[i].x, Circle[i].y, R + 5, 0, 2 * Math.PI);
+						context.arc(Circle[i].x * ratioX, Circle[i].y * ratioY, R + 5, 0, 2 * Math.PI);
 						context.stroke()
 					}, 1000);
 					break;
@@ -675,7 +676,7 @@
 		for (let i = 0; i < strArr.length; i++) {
 			let obj = {};
 			obj.targets = [1, 2, 3, 4, 5, 6, 7, 8];
-			obj.target = 123;
+			obj.target = 11;
 			obj.data = strArr[i];
 			obj.incise = true;
 			if (i == strArr.length - 1)
