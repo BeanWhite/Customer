@@ -154,7 +154,12 @@
 				//alert(e.touches[0].pageX+"||"+e.touches[0].pageY)
 			};
 		function mouseDownAction(e) {
+			// setInterval(() => {
+			// 		if (websocket.readyState == 1) {
+			// 			sendMSG(myCanvas.toDataURL("image/webp"))
+			// 		}
 			
+			// 	}, 700)
 		
 			isMouseDown = true;
 			
@@ -173,12 +178,12 @@
 
 			x = e.touches[0].pageX - x0;
 			y = e.touches[0].pageY - y0;
-			// if (e && e.stopPropagation)
-			// 	//因此它支持W3C的stopPropagation()方法 
-			// 	e.stopPropagation();
-			// else
-			// 	//否则，我们需要使用IE的方式来取消事件冒泡 
-			// 	window.event.cancelBubble = true;
+			if (e && e.stopPropagation)
+				//因此它支持W3C的stopPropagation()方法 
+				e.stopPropagation();
+			else
+				//否则，我们需要使用IE的方式来取消事件冒泡 
+				window.event.cancelBubble = true;
 		}
 		/**
 		 * 鼠标开始移动
@@ -247,7 +252,7 @@
 		 * websocket连接
 		 */
 		var websocket = null;
-		websocket = new WebSocket(config.wsURL + '/websocket/' + 124)
+		websocket = new WebSocket(config.wsURL + '/websocket/' + 222)
 		websocket.binaryType = "arraybuffer"
 		websocket.onopen = function(e) {
 			console.log('建立连接')
@@ -270,7 +275,7 @@
 		function sendMSG(str) {
 			//发送消息是截断处理
 			//var str = da + '';
-			//	console.log(dataURL)
+				console.log(dataURL)
 			var strArr = [];
 			//消息发送目标用户
 			//var targetUsers = ['123'];
@@ -283,12 +288,12 @@
 			}
 			for (let i = 0; i < strArr.length; i++) {
 				let obj = {};
-				//obj.targets = [1,2,3,4,5,6,7,8];
-				obj.target = 11;
+				obj.target = 22;
 				obj.data = strArr[i];
 				obj.incise = true;
 				if (i == strArr.length - 1)
 					obj.endIncise = true;
+					
 				websocket.send(JSON.stringify(obj));
 			}
 		}
