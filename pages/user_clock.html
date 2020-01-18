@@ -12,6 +12,9 @@
 	
 		<!-- 画板 -->
 		<div style="position: relative;height: 100%;width: 100%;">
+			<!-- <div style="z-index: 100; width:calc(100% - 30px);height: calc(100% - 30px);border: solid 15px #5F9EA0;position: absolute;top: 0;bottom: 0;left: 0;right: 0;">
+				
+			</div> -->
 			<!-- <div id="bot"> -->
 			<!-- <div id="draw-title" style="display: ;">
 					<ul>
@@ -42,6 +45,20 @@
 					</ul>
 				</div> -->
 				<!-- 悬浮工具栏 -->
+				<!-- <div style="width: 100%;height: 0px; border: 15px solid transparent;border-top: solid 15px #5F9EA0;z-index: 100;position: absolute;top: 0;background: url(../images/border.png);">
+					
+				</div> -->
+				<!-- <div style="width: 100%;border: 15px;border-bottom: solid 15px #aaff00;z-index: 100;position: absolute;bottom: 0;background: url(../images/border.png);">
+					
+				</div>
+				<div style="height: 100%;border: 15px;border-left: solid 15px #5500ff;z-index: 100;position: absolute;left: 0;background: url(../images/border.png);">
+					
+				</div>
+				<div style="height: 100%;border: 15px;border-right: solid 15px #55557f;z-index: 100;position: absolute;right: 0;background: url(../images/border.png);">
+					
+				</div> -->
+				<!-- 悬浮工具栏 -->
+				
 				<div id="suspend" style="position: absolute;z-index: 15;width: 40px;height: 40px;background-color: #2AC845;bottom: 30px;left: 20px;"></div>
 				<!-- 画板 -->
 				<canvas id="myCanvas" style="background-color: #C0C0C0;position: fixed;z-index: 10;top: 0;bottom: 0;margin: auto 0;">
@@ -91,7 +108,7 @@
 		var imgStack = []; //图像栈
 		var flag_img = 0;
 		var pen_color = 'red';
-		var pen_width = 2;
+		var pen_width = 1;
 		let dt; //
 		window.onload = function() {
 			bot.ontouchstart = mouseDownAction;
