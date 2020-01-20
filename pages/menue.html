@@ -7,99 +7,186 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../css/mui.min.css" rel="stylesheet" />
 		<link href="../css/init.css" rel="stylesheet" />
+		<link href="../css/menue.css" rel="stylesheet" />
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/config.js"></script>
+		<script src="../js/toJump.js"></script><!-- 
+		<script src="../js/vue.min.js"></script> -->
+		<script src="../js/vue.js"></script>
+		<script src="../js/jquery.min.js"></script>
 	</head>
-	<style type="text/css">
-		#test {
-			padding: 0 20px 0 20px;
 
-			white-space: nowrap;
-			text-align: center;
-			line-height: 80px;
-			height: auto;
-			margin-right: 100px;
-			background-color: rgba(255, 255, 255, 0.54);
-			border-color: rgb(255, 255, 255);
-			border-width: 1px;
-			border-style: solid;
-			color: rgb(255, 255, 255);
-			border-radius: 5px;
-			font-size: 28px;
-			cursor: default;
-		}
-
-		#history {
-			padding: 0 20px 0 20px;
-			white-space: nowrap;
-			text-align: center;
-			line-height: 80px;
-			height: auto;
-			margin-left: 100px;
-			background-color: rgba(255, 255, 255, 0.54);
-			border-color: rgb(255, 255, 255);
-			border-width: 1px;
-			border-style: solid;
-			color: rgb(255, 255, 255);
-			border-radius: 5px;
-			font-size: 28px;
-			cursor: default;
-		}
-
-		#content {
-			width: 100%;
-			height: 100%;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-		}
-
-		#bg {
-			position: fixed;
-			z-index: -1;
-			width: 100%;
-			height: 100%;
-		}
-	</style>
 	<body style="overflow: hidden;">
 
 		<!-- <div id="html-box" style="width: 100%;height: 100%;position: absolute;background-color: #ffffff;z-index: -3;"></div> -->
-		<object id="html-box" data="" style="width: 100%;height: 100%;position: absolute;background-color: #005500;z-index: -3;"></object>
+
 		<img id="bg" src="../images/poster-about.jpg" />
-		<div id="content">
+		<div id="content" class="vue">
+
+			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog"></div>
+			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog-content">
+				<div v-bind:class="[isDialog.indexOf(5)>-1?'on-flex':'off']" class="dialog-scaleMsg">
+					<div class="dialog-content-title">您即将完成以下量表题目</div>
+					<ul class="scale-list">
+						<li v-for="(it,index) in scaleMsg">{{it.name}}</li>
+					</ul>
+					<div class="dialog-close" v-on:click="closeDialog(5)">
+						确定
+					</div>
+				</div>
+			</div>
+			<div class="home" onclick="HOME()" :style="Npage.length>0?'':styles.visi_hid">
+				完成
+			</div>
+
 			<div id="test" onclick="startTest()">
 				开始评估
 			</div>
 			<div id="history" onclick="getHistory()">
 				历史报告
 			</div>
+			<object :data="Npage[1]" id="html-box" style="width: 100%;height: 100%;position: absolute;background-color: white;"
+			 :style="styles.pageZindex"></object>
 		</div>
 
 	</body>
-	<script src="../js/mui.min.js"></script>
-	<script src="../js/config.js"></script>
-	<script src="../js/toJump.js"></script>
-	<script type="text/javascript">
-		const USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+	<!-- 页面状态值说明：5->打开量表信息弹窗, 4->重新设置当前页面  -->
+	<script>
+		//const USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+		const USER_ID = 222;
+		const pages = $.ajax({
+			url: "../JSON/urlConfig.json",
+			async: false
+		}).responseJSON.pages;
 
-		//const USER_ID = 111;
-		var url = 'user_clock.html?'+USER_ID;
-		const html_box = document.getElementById("html-box");
-		mui.init({
-		});
-		
-		function startTest(){
-			// html_box.innerHTML =
-			// '<object type="text/html" data=' + url +
-			// 	' width="100%" height="100%"></object>';
-			html_box.data = url;
-				html_box.style.zIndex = 3;
-		};
-		
-		function getHistory(){
+		console.log(pages, '====');
+
+
+		var url = 'user_clock.html?' + USER_ID;
+
+		function HOME() {
+			vue.index = vue.index+1;
+			if(vue.index>=vue.scaleNumbers.length){
+				alert('测评结束，即将跳转');
+				return;
+			}
+			console.log(vue.scaleMsg);
+			 vue.Npage.splice(0);
+			 pages[vue.scaleNumbers[vue.index]];		//获取第一个量表的id,并从pages中获取url；
+			 vue.Npage.push(vue.scaleNumbers[vue.index]);	//id号
+			 vue.Npage.push(pages[vue.scaleNumbers[vue.index]]);	//url
+			 console.log(vue)
 			
+		}
+
+
+		$(document).ready(function() {
+			for (key in pages) {
+				
+				//console.log(getPage(pages[i]))	
+			}
+			
+
+		})
+
+		function startTest() {
+			//html_box.data = url;
+
+
+			//html_box.data = 'user_clock.html'
+			//html_box.data = url;
+			//html_box.style.zIndex = 3;
+			/**
+			 * 打开题目信息弹窗
+			 */
+			let ind = vue.isDialog.indexOf(5);
+			let ind2 = vue.ststus.indexOf(5)
+			if (ind2 > -1){
+				vue.isDialog.push(5);
+				vue.ststus.splice(ind2,1);
+			}
+			else if (ind > -1)
+				vue.isDialog.splice(ind, 1);
+			else if(ind2<0){
+				alert("现在还没有评估")
+			}
 		};
-		
+
+
+		/**
+		 * 关闭量表信息提示后开始进入第一个量表测验
+		 */
+		function testPages() {
+			console.log(vue.scaleMsg);
+			 vue.Npage.splice(0);
+			 pages[vue.scaleNumbers[vue.index]];		//获取第一个量表的id,并从pages中获取url；
+			 vue.Npage.push(vue.scaleNumbers[vue.index]);	//id号
+			 vue.Npage.push(pages[vue.scaleNumbers[vue.index]]);	//url
+			 console.log(vue)
+			//vue.Npage.push("user_clock.html?222");
+			// document.getElementById("html-box").style.zIndex = 3;
+			
+			// html_box.data = pages["11"];
+			// //html_box.innerHTML = getPage(pages['11']);
+			// //console.log(html_box.innerHTML)
+			if(vue.Npage.length>0)
+			vue.styles.pageZindex.zIndex = 3;
+			// html_box.style.zIndex = 30;
+		}
+
+		function getPage(e) {
+			let html = $.ajax({
+				url: e,
+				async: false
+			});
+			return html.responseText;
+		}
+
+		function getHistory() {
+
+		};
+
 		const ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
 
+		//ws.binaryType = "arraybuffer"
+
+		const vue = new Vue({
+			el: '.vue',
+			data: {
+				scaleNumbers:[],//量表顺序编号
+				index:'',			//当前编号
+				isDialog: [], //弹窗设置
+				scaleMsg: [], //弹窗显示的量表信息
+				ststus: [], //消息状态
+				Npage: [], //当前量表页,index = 0为量表id,index = 1 为量表url
+				styles: {
+					pageZindex: {
+						zIndex: -3,
+					},
+					visi_hid: {
+						visibility:"hidden"
+					},
+					visi_visi: {
+						visibility:"visible"
+					}
+
+				}
+
+
+			},
+			methods: {
+				//关闭弹窗
+				closeDialog: function(e) {
+					let ind = this.isDialog.indexOf(e);
+					if (ind > -1)
+						this.isDialog.splice(ind, 1);
+
+					if (e == 5)
+						testPages();
+
+				}
+			}
+		})
 		ws.onopen = function(e) {
 			console.log('连接')
 		};
@@ -112,10 +199,30 @@
 			console.log('出错')
 		};
 		ws.onmessage = function(e) {
-			console.log('有消息', e.data)
+			let data = JSON.parse(e.data)
+			console.log('有消息', data)
+			if (data.status == 5) {
+				//医生发送过来的量表信息
+				vue.scaleMsg.splice(0);
+				for (let i = 0; i < data.data.length; i++) {
+					let obj = {};
+					obj.id = data.data[i].aiScaleId;
+					obj.name = data.data[i].aiScaleName;
+					
+					vue.scaleMsg.push(obj);//量表信息
+					
+					vue.scaleNumbers.push(obj.id);//量表顺序
+				}
+				vue.ststus.push(5)
+				
+				vue.index = 0;
+				console.log(vue)
+			}
 		};
 		ws.onbeforeunload = function() {
 			console.log('关闭')
 		}
 	</script>
+
+
 </html>
