@@ -11,8 +11,11 @@
 
 <!-- 画板 -->
 <div class="canvas-box">
+
+	
 	<div class="canvas-box-title">
-		<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:{{3}</span>
+		<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:{{连线测验}</span>
+		<span style="color:rgb(214, 9, 9);font-family: SourceHanSansSC ;" onclick="home()">完成</span>
 	</div>
 	<div class="canvas-box-tools">
 		<div class="tools">
@@ -38,19 +41,29 @@
 		</ul>
 		
 	</div>
-	<span style="display: inline-block; position: fixed;top: 70px;width: 100%; text-align: center; z-index: 11;">画板</span>
+	<span style="position: fixed;top: 70px; z-index: 11; margin-left: 50%;">画板</span>
 	<canvas id="myCanvas"></canvas>
+	<input type="" name="" id="inp" value="" style="position: fixed;top: 50px;left: 200px;z-index: 200;" />
 </div>
 
 <button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button>
 <script> 
+//let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+let USER_ID = 222;
+let DOC_ID = 22;
 function ppp(){
 	location.reload(true)
 }
-
-
-
-
+function home(){
+	let obj  = {
+		target:22,
+		status:201,
+		from_who:USER_ID,
+		data:Cpath
+	};
+	parent.window.vue.scale_R['20'] = obj;
+	console.log(parent.window.vue)
+}
 </script>
 
 
@@ -58,11 +71,7 @@ function ppp(){
 	/**
 	 * ！！！！要设置为在画布中有记录之后才能发送消息！！！！
 	 */
-	var Circle = $.ajax({
-		url:'../JSON/circle.json',
-		async:false
-	}).responseJSON;
-	console.log(Circle)
+	var inp = document.getElementById('inp');
 	var eraser = document.getElementById('eraser');
 	var pencile = document.getElementById('pen');
 	var getW = document.getElementById('getW');
@@ -72,6 +81,7 @@ function ppp(){
 	var ttt = document.getElementById('draw-tools');
 	var myCanvas = document.getElementById('myCanvas', 1); //创建画布
 	var x, y, x1, y1; //记录坐标
+	var isIn = false;	//判断线条是否进入圆的范围内，默认没有		
 	
 	//画板左上角像素坐标（px）
 	var Lx = (getW.offsetWidth - bot.offsetWidth) / 2,
@@ -90,22 +100,46 @@ function ppp(){
 	var pen_color = 'black';
 	var pen_width = 2;
 	let dt; 
-
-	var ratioX = bot.width / bot.offsetWidth, //比例
+	var C = $.ajax({
+		url:'../JSON/circle.json',
+		async:false
+	}).responseJSON;				//从JSON获取圆配置信息
+	console.log(C);
+	var status =4;					//当前圆状态，用于选择哪一种图
+	const R = 15;					//圆的半径
+	var Circle;						//当前圆
+	var CP = {}						//存储已经画好的圆在画板中的位置
+	var Cpath = [];					//存储用户画的路线(圆的值)
+	var ratioX = bot.width / bot.offsetWidth, //比例(画板大小/px像素)
 		ratioY = bot.height / bot.offsetHeight;
-		window.onload = function() {
+	
+	var cX =  (bot.width - 150) / (bot.offsetWidth),	//工具栏的宽度设置为100px,所以减去100，多一点防止压线
+		cY = ( bot.height-200) / bot.offsetHeight,
+		rowX = 100 * ratioX;		//最后圆还需要在画板中平移的距离
+	window.onload = function() {
 		bot.ontouchstart = mouseDownAction;
 		bot.ontouchmove = mouseMoveAction;
 		bot.ontouchend = mouseUpAction;
 	}
+	$(document).ready(function(){
+		init_canvas();
+		dataURL = myCanvas.toDataURL();
+		imgStack.push({
+			dataURL:dataURL,
+			path:[]
+		})	
+	})
 	
 	/**
 	 * 撤回
 	 */
 	function cancle_pen() {
-		if (dataURL == imgStack[imgStack.length - 1])
+		if (dataURL == imgStack[imgStack.length - 1].dataURL){
 			imgStack.pop()
-		dataURL = imgStack[imgStack.length - 1];
+		}
+		console.log(imgStack)
+		dataURL = imgStack[imgStack.length - 1].dataURL;
+		Cpath = imgStack[imgStack.length - 1].path.slice(0);
 		bot.height = bot.height;
 		let img = new Image();
 		img.src = dataURL;
@@ -124,7 +158,11 @@ function ppp(){
 		ss = [];
 		strokesStack = [];
 		dataURL = myCanvas.toDataURL();
-		imgStack.push(dataURL);
+		
+		imgStack.push({
+			dataURL:dataURL,
+			path:Cpath.slice(0)
+		});
 		sendMSG(dataURL);
 		
 	}
@@ -177,11 +215,14 @@ function ppp(){
 	 * 返回到上一笔
 	 */
 	function retreat(){
-		if(imgStack.length<1)
+		if(imgStack.length<2)
 		return
-		if (dataURL == imgStack[imgStack.length - 1])
+		//console.log(imgStack,'a')
+		//if (dataURL == imgStack[imgStack.length - 1].dataURL)
 			imgStack.pop()
-		dataURL = imgStack[imgStack.length - 1];
+			//console.log(imgStack,'b')
+		dataURL = imgStack[imgStack.length - 1].dataURL;
+		Cpath = imgStack[imgStack.length - 1].path.slice();
 		bot.height = bot.height;
 		let img = new Image();
 		img.src = dataURL;
@@ -191,6 +232,46 @@ function ppp(){
 		})
 
 	}
+	
+	/**
+	 * @param {Object} e初始化面板
+	 */
+	function init_canvas(){
+		CP = {};		//清空之前的数据
+		Cpath =[];
+		if (status == 1)
+			Circle = C.Circle_1;
+		else if (status == 2)
+			Circle = C.Circle_2;
+		else if (status == 3)
+			Circle = C.Circle_3;
+		else
+			Circle = C.Circle_4;
+		for (i in Circle) {
+			context.beginPath();
+			context.strokeStyle = '#000000';
+			context.lineWidth = 2;
+			context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+			context.font = "20px Arial";
+			//添加文字
+			if (parseInt(Circle[i].value) > 9)
+				context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R * 0.8, Circle[i].y * cY + R / 2);
+			else
+				context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R / 2, Circle[i].y * cY + R / 2);
+			if (Circle[i].mark)
+				context.fillText(Circle[i].mark, Circle[i].x * cX + rowX - R * 1.5 , Circle[i].y * cY - R *1.5)
+			
+			let o = {
+				x:Circle[i].x * cX + rowX,
+				y:Circle[i].y * cY,
+				r:R
+			}
+			CP[Circle[i].value] = o;
+ 			context.stroke()
+		}
+		console.log(CP)
+	}
+	
 	/**
 	 * 鼠标按下
 	 */
@@ -211,17 +292,47 @@ function ppp(){
 			window.event.cancelBubble = true;
 	}
 	/**
+	 * @param {Object} e获取触摸位置到圆心的距离
+	 */
+	
+	function getDistance(x1,y1){
+		let d = "" ;
+		for(i in CP){
+		let x=CP[i].x;
+		let y = CP[i].y;
+		if(Math.sqrt((x1-x)*(x1-x) + (y1-y) * (y1-y))<= CP[i].r+1)
+			d = i;
+		
+		}
+		return d;
+	}
+	
+	/**
 	 * 鼠标开始移动
 	 */
 	function mouseMoveAction(e) {
 		if(isPen == false&& isEraser == false)
 		return
 		if (isMouseDown) {
+			
 			// x1 = e.offsetX;
 
 			// y1 = e.offsetY;
 			x1 = (e.touches[0].pageX - Lx) * ratioX;
 			y1 = (e.touches[0].pageY - Ly) * ratioY;
+			let d = getDistance(x1,y1);
+			if(d!=""){
+				inp.value = d;
+				if(Cpath.length>0){
+					if(d!=Cpath[Cpath.length-1]){
+						if(Cpath.indexOf(d)<0){
+							Cpath.push(d)
+						}
+					}
+				}else{
+					Cpath.push(d);
+				}
+			}else inp.value = ""
 			drowLine(x, y, x1, y1);
 			flag++;
 			if (flag == 10000)
@@ -238,6 +349,7 @@ function ppp(){
 	 * 鼠标弹起来
 	 */
 	function mouseUpAction(e) {
+		
 		if(isPen == false && isEraser ==false)
 		return
 		if(ss.length>0){
@@ -245,18 +357,16 @@ function ppp(){
 			ss = []
 		}
 		
-		
-		//clearInterval(dt)
 		isMouseDown = false;
 		flag = 0;
 		if (isMove) {
 			dataURL = myCanvas.toDataURL();
-			imgStack.push(dataURL);
+			imgStack.push({
+				dataURL:dataURL,
+				path:Cpath.slice(0)
+			});
 			isMove = false;
 			sendMSG(dataURL)
-			//dataURL = myCanvas.toDataURL('image/webp');
-			//sendMSG(dataURL);
-
 		}
 		if (e && e.stopPropagation)
 			//因此它支持W3C的stopPropagation()方法 
@@ -264,6 +374,8 @@ function ppp(){
 		else
 			//否则，我们需要使用IE的方式来取消事件冒泡 
 			window.event.cancelBubble = true;
+		
+		console.log(imgStack)
 	}
 	/**
 	 * 画线
@@ -297,7 +409,7 @@ function ppp(){
 	 * websocket连接
 	 */
 	var websocket = null;
-	websocket = new WebSocket(config.wsURL + '/websocket/' + 222)
+	websocket = new WebSocket(config.wsURL + '/websocket/' + USER_ID)
 	websocket.binaryType = "arraybuffer"
 	websocket.onopen = function(e) {
 		console.log('建立连接')
@@ -308,6 +420,72 @@ function ppp(){
 		console.log('连接关闭')
 	}
 	websocket.onmessage = function(e) {
+		let p;
+		let data;
+		console.log(e)
+		try {
+			data = JSON.parse(e.data);
+			p = JSON.parse(e.data).data;
+		} catch (e) {
+			return
+			//TODO handle the exception
+		}
+		console.log(data)
+		if (data.status == 0) {
+			console.log(data)
+			status = data.data;
+			bot.height = bot.height;
+			imgStack.splice(0, imgStack.length);
+			init_canvas();
+			//dataURL = myCanvas.toDataURL("image/webp");
+			imgStack.push({
+				dataURL:dataURL,
+				path:Cpath.slice(0)
+			});
+			sendMSG();
+		
+		} else if (data.status == 1) {
+			if (status == 1)
+				Circle = C.Circle_1;
+			else if (status == 2)
+				Circle = C.Circle_2;
+			else if (status == 3)
+				Circle = C.Circle_3;
+			else
+				Circle = C.Circle_4;
+			for (i in Circle) {
+				if (Circle[i].value == p) {
+					
+					
+					context.font = "20px Arial";
+					//添加文字
+					if (parseInt(Circle[i].value) > 9)
+						context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R * 0.8, Circle[i].y * cY + R / 2);
+					else
+						context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R / 2, Circle[i].y * cY + R / 2);
+					if (Circle[i].mark)
+						context.fillText(Circle[i].mark, Circle[i].x * cX + rowX - R * 1.5 , Circle[i].y * cY - R *1.5)
+				
+					
+					
+				
+					context.beginPath(); 
+					context.strokeStyle = '#ff0000';
+					context.lineWidth = 2;
+					context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+					context.stroke();
+					setTimeout(function() {
+						context.beginPath();
+						context.strokeStyle = '#000000';
+						context.lineWidth = 2;
+						context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+						context.stroke()
+					}, 1000);
+					break;
+				}
+		
+			}
+		}
 		console.log("有消息推送", e.data, '***');
 	}
 	websocket.onerror = function() {
