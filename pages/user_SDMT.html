@@ -34,7 +34,6 @@
 							</tr>
 						</table>
 					</div>
-
 					<div class="table-group " v-if="pos==0">
 						<div class="table-title title-blue">
 							例题
@@ -51,7 +50,7 @@
 							</tr>
 						</table>
 					</div>
-
+					<!-- 固定位置 -->
 					<div class="table-group-t spbot fix-table" v-if="pos==1">
 						<table border="1" style="">
 							<tr>
@@ -62,6 +61,7 @@
 							</tr>
 						</table>
 					</div>
+					<!-- 隐藏部分 -->
 					<table border="1" class="table-group-t spbot hidden-table" v-if="pos==1">
 						<tr>
 							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
@@ -70,21 +70,29 @@
 							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.value}}</td>
 						</tr>
 					</table>
+					<!-- 做题内容 -->
+					<div class="table-group-box spbot"  v-for="(i,n) in getRandomTest" v-if="pos==1">
+						<span class="ati">第{{n+1}}题</span>
+						<table border="1" class="table-group-t " v-if="pos==1">
+							<tr>
+								<td v-for="(it,index) in i" class="table-item-max">
+									<span>{{it.key}}</span>
 
-					<table border="1" v-for="(i,n) in a" class="table-group-t spbot" v-if="pos==1">
-						<tr>
-							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
-						</tr>
-						<tr>
-							<td v-for="(it,index) in getKeyValue" class="table-item-max">
-								<input class="table-item-input" v-model="testModel[0][2]" readonly="readonly" @focusout="inputFocusOut(index)"
-									 @focus="inputFocus(index)" /></td>
-						</tr>
-					</table>
-
-
+								</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in i" class="table-item-max">
+									<input class="table-item-input" v-model="testModel[n][index]" readonly="readonly" @focusout="inputFocusOut(index,n)"
+									 @focus="inputFocus(index,n)" />
+								</td>
+							</tr>
+						</table>
+					</div>
 					<div class="msg" v-if="inputPos>-2">
 						<span v-for="(it,index) in getI" v-on:click="addn(it,'testModel')" class="msg-item">{{it}}</span>
+					</div>
+					<div v-if="!getKeyValue">
+						请叫医生刷新平板
 					</div>
 				</div>
 			</div>
@@ -92,53 +100,81 @@
 
 	</body>
 	<script>
-		console.log(parent.vue.itemPackage)
 		let vue = new Vue({
 			el: '.content',
 			data: {
-				a: [1, 1, 1, 1, 1],
+				a: [1, 1, 1, 1, 1, 1, 1, 1],
 				dataPackage: $.ajax({
 					url: "../JSON/sdmt.json",
 					async: false
 				}).responseJSON,
-				pos: 1,
+				pos: 0,
 				guids: sdmt_guid, //指导语
 				inputModel: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-				testModel:[
+				testModel: [
 					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
 					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
 					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
 					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
 					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
 				],
-				inputPos: -2, //input聚焦位置，默认-1表示未聚焦
+				inputPos: -2, //input聚焦位置，默认-2表示未聚焦
+				inputPosN: -2, //做题时被点击的组号，默认-2表示未点击
 				copInputPos: -2, //inputPos复制版
+				reBack: null,
+				isEnd: false, //测试是否结束
+				fastData: parent.vue.fastData,
+				x: -1,
+				y: -1
 			},
 			created() {
 
 			},
 			methods: {
-				addn: function(it,objName) {
-					if(objName=='testModel'){
-						
+				addn: function(it, objName) {
+					if (this.isEnd)
+						return
+
+					if (objName == 'testModel') {
+						this.testModel[this.inputPosN].splice(this.inputPos, 1, it)
+					} else {
+						this.inputModel.splice(this.inputPos, 1, it);
 					}
-					this.inputModel.splice(this.inputPos, 1, it);
+					this.inputPosN = -2;
 					this.inputPos = -2;
 				},
-				inputFocus: function(e) {
+				inputFocus: function(e, n) {
+					if (this.isEnd)
+						return
+					this.x = n;
+					this.y = e;
+					clearTimeout(this.reBack);
 					this.inputPos = e;
+					if (n != null) {
+						this.inputPosN = n;
+					}
+
 				},
-				inputFocusOut: function(e) {
+				inputFocusOut: function(e, n) {
+					if (this.isEnd)
+						return
 					let that = this;
-					setTimeout(() => {
+					this.reBack = setTimeout(() => {
 						that.inputPos = -2;
+						if (n)
+							that.inputPosN = -2;
 					}, 1)
 
 				}
 			},
 			computed: {
-				getRandomTest: function() { //获取所有测试数据
+				getRandomTest: function() { //获取所有做题数据
 					if (this.dataPackage) {
 						return this.dataPackage.RandomTest;
 					} else return null;
@@ -168,7 +204,7 @@
 				},
 				getI: function() {
 					let arr = [];
-					for (let i = 1; i < 9; i++)
+					for (let i = 1; i <= 9; i++)
 						arr.push(i)
 
 					arr.push("")
@@ -178,11 +214,46 @@
 			watch: {
 				dataPackage: {
 					handler(newa, oldb) {
-						console.log('pack修改', newa, oldb)
+						for(let i=0;i<this.testModel.length;i++){
+							for(let j=0;j<this.testModel[i].length;j++){
+								this.testModel[i].splice(j,1,"")
+							}
+						}
+						console.log('pack修改', newa, oldb);
 					},
 					deep: true,
 					immediate: false
-				}
+				},
+				fastData: {
+					handler(newa, oldb) {
+						console.log('fast改变')
+						if(this.pos!=newa[0])
+							this.pos = newa[0]
+						
+					},
+					deep: true,
+					immediate: false
+				},
+				testModel: {
+					handler(newa, oldb) {
+						console.log('model改变');
+						let o = {
+							target: parent.window.vue.docId,
+							data: {
+								x: this.x,
+								y: this.y,
+								value: this.testModel[this.x][this.y]
+							},
+							status: 1,
+							from_who: parent.window.parent.USER_ID,
+							dataOptions: 1
+						}
+						parent.window.sendMsg(o);
+					},
+					deep: true,
+					immediate: false
+				},
+
 			}
 		})
 
@@ -192,8 +263,9 @@
 
 			},
 			set(e) {
-				vue.dataPackage = e;
-				console.log(JSON.stringify(e))
+				//if(e.RandomTest.length!=0)
+					vue.dataPackage = e;
+				console.log(e,'dataPac改变')
 			}
 		})
 	</script>
