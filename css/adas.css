@@ -1,0 +1,55 @@
+.word-content {
+	font-size: 40px;
+	width: 100%;
+	height: auto;
+
+}
+
+.word-content-7 {
+	padding-bottom: 30px;
+}
+
+.word-content-item {
+	border: 1px solid darkgray;
+	border-radius: 5px;
+	text-align: center;
+	margin: 0 15px 40px 15px;
+	width: calc(16% - 30px);
+	height: 100px;
+	line-height: 100px;
+}
+
+.word-jud-content {
+	width: calc(16% - 10px);
+	height: calc(25% - 20px);
+	margin: 0 5px 10px 5px;
+	border: 1px solid darkgray;
+}
+
+.word-title {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 50%;
+	background-color: rgba(138, 144, 149, 0.19);
+}
+
+.word-select {
+	width: 100%;
+	height: 50%;
+	display: flex;
+	justify-content: space-around;
+}
+.word-select-item{
+	width: calc(50% - 1px);
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.select-itme-bgc{
+	background-color: #d2e6d1;;
+}
+

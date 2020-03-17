@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<link rel="stylesheet" type="text/css" href="../css/adas.css" />
+		<link rel="stylesheet" type="text/css" href="../css/init.css" />
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery.min.js"></script>
+		<script src="../js/utils/utils.js"></script>
+	</head>
+	<body>
+		<div class="content">
+			<object v-if="testNo==4" :style="{display:(testNo==4?'initial':'none')}" data="user_clock.html" class="off Ifram"></object>
+			<div class="page-content" v-else>
+				<div class="page-content-title">
+					<span class="title-blue">量表名称：{{titile}}</span>
+					<span class="title-red">完成</span>
+				</div>
+				<div class="page-content-main">
+					<div class="title-box-center title-blue">
+						{{titileName}}{{testNo}}
+					</div>
+					<div class="mainMargin">
+						<div class="title-box-between">
+							<span>{{getGuids}}</span><span v-if="testNo==1">{{getTimer}}</span>
+						</div>
+						<div class="mainMargin-content stay-center">
+							<span v-if="testNo==1" class="font-large">{{timerEnd?"":getFastData}}</span>
+
+							<img v-if="testNo==2" :src="getFastData">
+
+							<span v-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
+							<div class="full" v-if="testNo==7">
+								<div v-if="ind_7==0" class="flex-colum-space-evenly full">
+									<ul class="flex-wrap word-content">
+										<li v-for="(it,index) in getWordGroup[0]" class="word-content-item"><span>{{it}}</span></li>
+									</ul>
+									<div class="button-blue-large" @click="()=>{ind_7++}">
+										进入答题
+									</div>
+								</div>
+								<ul class="full no-padding flex-wrap" v-else>
+									<li v-for="(it,index) in getWordGroup[ind_7]" class="word-jud-content flex-colum-flexStart">
+										<div class="word-title title-text-normal">
+											{{it}}
+										</div>
+										<div class="word-select">
+											<div class="word-select-item title-text-green" v-bind:class="[selectT.indexOf(index)>-1?'select-itme-bgc':'']"
+											 @click="wordSelect(index,1,it)">
+												是
+											</div>
+											<hr class="no-margin no-padding colum-line" />
+											<div class="word-select-item title-text-red" v-bind:class="[selectF.indexOf(index)>-1?'select-itme-bgc':'']"
+											 @click="wordSelect(index,0,it)">
+												否
+											</div>
+										</div>
+									</li>
+								</ul>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;">刷新</button>
+		<script>
+			function a() {
+			location.reload(true)
+		}
+		</script>
+	</body>
+	<script>
+		
+		var vue = new Vue({
+			el: '.content',
+			data: {
+				titile: "阿尔茨海默评定量表-认知",
+				guid: "",
+				dataPackage: "", //父页面数据包
+				fastData: "", //父页面即时数数据
+				isTimer: [], //存放需要计时器的题号
+				timer: null, //计时器装置
+				timerObj: {
+					hours: "",
+					minutes: "",
+					seconds: "",
+					p: ""
+				}, //计时器数据
+				selectT: [], //第七题正确选项被选
+				selectF: [], //第七题错误选项被选
+				ind_7: 0, //阿尔茨海默第七题单词组下标
+				itemPic: true, //第四题画板插件显示示例图片
+				pac_4:{
+					f:null
+				}
+			},
+			computed: {
+				getGuids: function() {
+					if (this.dataPackage[0])
+						if(this.dataPackage[0].aiQuestionGuid)
+							return "指导语：" + this.dataPackage[0].aiQuestionGuid
+						else return null
+					else
+						return null
+				},
+				getFastData: function() {
+					if(this.fastData.length==0)
+					return null
+					return this.fastData[0];
+				},
+				getDataPackAge: function() {
+					console.log(this.dataPackage[0], '****')
+					if (this.dataPackage[0])
+						return this.dataPackage[0];
+					else return null;
+				},
+				titileName: function() {
+					if (this.dataPackage[0])
+						return this.dataPackage[0].aiQuestionId + '. ' + this.dataPackage[0].name;
+					else return null;
+				},
+				getTimer: function() {
+					if (this.timer == null)
+						return "";
+					let a, b;
+					if (this.timerObj.seconds < 10)
+						a = '0' + this.timerObj.seconds;
+					else a = this.timerObj.seconds;
+					if (this.timerObj.p < 10)
+						b = '0' + this.timerObj.p;
+					else b = this.timerObj.p;
+					return "词语倒计时：" + a + ":" + b;
+				},
+				timerEnd: function() {
+					if (this.timerObj.seconds + this.timerObj.p == 0) {
+						//this.timer = null;
+						return true;
+					} else return false;
+				},
+				testNo: function() {
+					if (this.dataPackage[0])
+						return this.dataPackage[0].aiQuestionId;
+					else
+						return 1;
+				},
+				getWordGroup: function() { //阿尔茨海默，第七题获取单词
+					if (this.dataPackage[0]) {
+						return this.dataPackage[0].aiQuestionContent[0];
+					} else
+						return [
+							["寂静", "女儿", "前额", "老虎", "黎明", "乞丐", "回声", "村庄", "角落", "勇气", "容器", "物体"],
+							["寂静", "肘", "女儿", "粉末", "运河", "前额", "老虎", "黎明", "龙", "卧室", "姐姐", "乞丐", "回声", "侄子", "义务", "村庄", "角落", "橄榄树",
+								"音乐", "勇气", "容器", "丝带", "物体", "项链"
+							],
+							["气泡", "角落", "珠宝", "淋浴器", "村庄", "前额", "寂静", "老虎", "会议", "容器", "汽车", "洋葱", "乞丐", "警报", "回声", "勇气", "女儿", "物体",
+								"器官", "饮料", "水盆", "夹克", "黎明", "市长 "
+							],
+							["猴子", "寂静", "岛屿", "季节", "黎明", "针", "回声", "牛", "角落", "王国", "老虎", "物体", "乞丐", "喷泉", "村庄", "人民", "猎人", "前额",
+								"投手", "容器", "女儿", "勇气", "贝壳", "百合"
+							]
+						];
+				},
+			},
+			methods: {
+				sendMsg: function(o) {
+					parent.window.sendMsg(o)
+				},
+				wordSelect: function(index, a, b) {
+					let t = this.selectT.indexOf(index);
+					let f = this.selectF.indexOf(index);
+
+					if (a == 0) {
+						if (f > -1)
+							return
+						this.selectF.push(index);
+						if (t > -1)
+							this.selectT.splice(t, 1);
+					} else {
+						if (t > -1)
+							return
+						this.selectT.push(index);
+						if (f > -1)
+							this.selectF.splice(f, 1)
+					}
+					let o = {
+						target: parent.window.vue.docId,
+						status: 1,
+						data: {
+							title: b,
+							value: a
+						},
+						dataOptions:7
+					}
+					this.sendMsg(o);
+
+				}
+			},
+			watch: {
+				dataPackage: {
+					handler(a, b) {
+						console.log(a, b, 'watch')
+					},
+					deep: true,
+					immediate: false
+				},
+				fastData: {
+					handler(a, b) {
+						if (b == "")
+							return
+						if (this.testNo == 1) {
+							this.timer = new Timer();
+							this.timer.setObject(this.timerObj)
+							this.timer.setSeconds(2);
+							this.timer.startCutDown();
+						}
+						if (this.testNo == 7) {
+							this.ind_7 = this.fastData[0];
+							this.selectT.splice(0);
+							this.selectF.splice(0);
+						}
+						if(this.testNo == 4){
+							this.pac_4.f = this.fastData
+						}
+					},
+					immediate: false
+				}
+			},
+			created() {
+				this.dataPackage = parent.window.vue.itemPackage;
+				this.fastData = parent.window.vue.fastData;
+			}
+		});
+	</script>
+</html>

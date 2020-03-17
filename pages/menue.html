@@ -1,6 +1,5 @@
 <!doctype html>
 <html>
-
 	<head>
 		<meta charset="utf-8">
 		<title></title>
@@ -11,19 +10,12 @@
 		<script src="../js/mui.min.js"></script>
 		<script src="../js/config.js"></script>
 		<script src="../js/toJump.js"></script>
-		<!-- 
-		<script src="../js/vue.min.js"></script> -->
-		<script src="../js/vue.js"></script>
+		<script src="../js/vue.min.js"></script>
 		<script src="../js/jquery.min.js"></script>
 	</head>
-
 	<body style="overflow: hidden;">
-
-		<!-- <div id="html-box" style="width: 100%;height: 100%;position: absolute;background-color: #ffffff;z-index: -3;"></div> -->
-
 		<img id="bg" src="../images/poster-about.jpg" />
 		<div id="content" class="vue">
-
 			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog"></div>
 			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog-content">
 				<div v-bind:class="[isDialog.indexOf(5)>-1?'on-flex':'off']" class="dialog-scaleMsg">
@@ -36,157 +28,42 @@
 					</div>
 				</div>
 			</div>
-			<!-- 	<div class="home" onclick="HOME()" :style="Npage.length>0?'':styles.visi_hid">
-				完成
-			</div>
- -->
-			<div id="test" onclick="startTest()">
+			<div id="test" v-on:click="startTest()">
 				开始评估
 			</div>
-			<div id="history" onclick="getHistory()">
+			<div id="history" v-on:click="getHistory()">
 				历史报告
 			</div>
-			<object :data="Npage[1]" id="html-box" style="width: 100%;height: 100%;position: absolute;background-color: white;"
-			 :style="styles.pageZindex"></object>
+			<object class="menue-obj" :data="Npage[1]" id="html-box" :style="styles.pageZindex"></object>
 		</div>
-
+<button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;z-index: 1000;">刷新</button>
+	<script>
+		function a() {
+		location.reload(true)
+	}
+	</script>
 	</body>
 	<!-- 页面状态值说明：5->打开量表信息弹窗, 4->重新设置当前页面  -->
 	<script>
 		//const USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
 		const USER_ID = 222;
-		const pages = $.ajax({
-			url: "../JSON/urlConfig.json",
-			async: false
-		}).responseJSON.pages;
-
-		console.log(pages, '====');
-
-
-		var url = 'user_clock.html?' + USER_ID;
-
-		function HOME() {
-			vue.index = vue.index + 1;
-			if (vue.index >= vue.scaleNumbers.length) {
-				alert('测评结束，即将跳转');
-				return;
-			}
-			console.log(vue.scaleMsg);
-			vue.Npage.splice(0);
-			pages[vue.scaleNumbers[vue.index]]; //获取第一个量表的id,并从pages中获取url；
-			vue.Npage.push(vue.scaleNumbers[vue.index]); //id号
-			vue.Npage.push(pages[vue.scaleNumbers[vue.index]]); //url
-			console.log(vue)
-
-		}
-
-
-		/**
-		 * 页面初始化
-		 */
-		$(document).ready(function() {
-			for (key in pages) {
-
-				//console.log(getPage(pages[i]))	
-			}
-
-
-		})
-
-		/**
-		 * 点击开始测评
-		 */
-
-		function startTest() {
-
-			vue.Npage.push("20");
-			vue.Npage.push("user_ligature.html?222");
-			vue.styles.pageZindex.zIndex = 3;
-
-
-			/**
-			 * 打开题目信息弹窗
-			 */
-			// let ind = vue.isDialog.indexOf(5);
-			// let ind2 = vue.ststus.indexOf(5)
-			// if (ind2 > -1){
-			// 	vue.isDialog.push(5);
-			// 	vue.ststus.splice(ind2,1);
-			// }
-			// else if (ind > -1)
-			// 	vue.isDialog.splice(ind, 1);
-			// else if(ind2<0){
-			// 	alert("现在还没有评估")
-			// }
-		};
-
-
-		/**
-		 * 关闭量表信息提示后开始进入第一个量表测验
-		 */
-		function testPages() {
-			console.log(vue.scaleMsg);
-			vue.Npage.splice(0);
-			pages[vue.scaleNumbers[vue.index]]; //获取第一个量表的id,并从pages中获取url；
-			vue.Npage.push(vue.scaleNumbers[vue.index]); //id号
-			vue.Npage.push(pages[vue.scaleNumbers[vue.index]]); //url
-			console.log(vue)
-			if (vue.Npage.length > 0)
-				vue.styles.pageZindex.zIndex = 3;
-
-
-			//vue.Npage.push("user_clock.html?222");
-			// document.getElementById("html-box").style.zIndex = 3;
-
-			// html_box.data = pages["11"];
-			// //html_box.innerHTML = getPage(pages['11']);
-			// //console.log(html_box.innerHTML)
-
-			// html_box.style.zIndex = 30;
-		}
-
-		/**
-		 * @param {Object} e根据url获取html文本（应该不用）
-		 */
-		function getPage(e) {
-			let html = $.ajax({
-				url: e,
-				async: false
-			});
-			return html.responseText;
-		}
-
-		/**
-		 * 获取历史报告记录
-		 */
-		function getHistory() {
-			PageR();
-		};
-
-		/**
-		 * 处理子页面传过来的结果，并发送给服务器，通过websocket发送，要使用定义的数据包格式
-		 */
-		function PageR() {
-			let r = vue.scale_R;	//从vue中获取数据
-			//发送数据
-			sendMsg(r);
-		}
-
-		const ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
-
-		//ws.binaryType = "arraybuffer"
-
+		//var url = 'user_clock.html?' + USER_ID;
 		var vue = new Vue({
 			el: '.vue',
 			data: {
 				a: '',
 				b: '',
+				docId:"22",	//默认为空字符串
+				pages: null,
+				fastData:[],	//子页面需要的即时数据
+				itemPackage: [], //子页面数据包
 				scaleNumbers: [], //量表顺序编号
 				index: '', //当前编号
 				isDialog: [], //弹窗设置
 				scaleMsg: [], //弹窗显示的量表信息
 				ststus: [], //消息状态
 				Npage: [], //当前量表页,index = 0为量表id,index = 1 为量表url
+				guids: "", //ws接受的指导语
 				styles: {
 					pageZindex: {
 						zIndex: -3,
@@ -197,25 +74,35 @@
 					visi_visi: {
 						visibility: "visible"
 					}
-
 				},
 				scale_R: { //各个量表子页面的结果对象,直接发送到服务器，由服务器判断是否需要在服务器中处理
 					'20': '',
-				}
-
-
+				},
+				dataPackage:{},
+			},
+			created() {
+				this.pages = $.ajax({
+					url: "../JSON/urlConfig.json",
+					async: false
+				}).responseJSON.pages;
 			},
 			watch: {
 				scale_R: {
 					handler(a, b) {
-						getHistory()
+						this.getHistory()
 						this.a = a;
 						this.b = b;
 					},
 					deep: true,
 					immediate: false
+				},
+				dataPackage:{
+					handler(a,b){
+						console.log('menue修改',a,b)
+					},
+					deep:true,
+					immediate:false
 				}
-
 			},
 			methods: {
 				//关闭弹窗
@@ -223,28 +110,99 @@
 					let ind = this.isDialog.indexOf(e);
 					if (ind > -1)
 						this.isDialog.splice(ind, 1);
-
 					if (e == 5)
-						testPages();
+						this.testPages();
+				},
+				/**
+				 * 点击开始测评
+				 */
+				startTest: function() {
+					this.Npage.push("14");
+					this.Npage.push("user_SDMT.html?222");
+					this.styles.pageZindex.zIndex = 3;
+					/**
+					 * 打开题目信息弹窗
+					 */
+					let ind = this.isDialog.indexOf(5);
+					let ind2 = this.ststus.indexOf(5)
+					if (ind2 > -1) {
+						this.isDialog.push(5);
+						this.ststus.splice(ind2, 1);
+					} else if (ind > -1)
+						this.isDialog.splice(ind, 1);
+					else if (ind2 < 0) {
+						alert("现在还没有评估")
+					}
+				},
+				/**
+				 * 关闭量表信息提示后开始进入第一个量表测验
+				 */
+				testPages: function() {
+					console.log(this.scaleMsg, "scaleMsg");
+					this.Npage.splice(0);
+					this.pages[this.scaleNumbers[this.index]]; //获取第一个量表的id,并从pages中获取url；
+					this.Npage.push(this.scaleNumbers[this.index]); //id号
+					this.Npage.push(this.pages[this.scaleNumbers[this.index]]); //url
+					console.log(this)
+					if (this.Npage.length > 0)
+						this.styles.pageZindex.zIndex = 3;
+				},
+				/**
+				 * @param {Object} e根据url获取html文本（应该不用）
+				 */
+				getPage: function(e) {
+					let html = $.ajax({
+						url: e,
+						async: false
+					});
+					return html.responseText;
+				},
+				/**
+				 * 获取历史报告记录
+				 */
+				getHistory: function() {
+					PageR();
+				},
 
+				/**
+				 * 处理子页面传过来的结果，并发送给服务器，通过websocket发送，要使用定义的数据包格式
+				 */
+				PageR: function() {
+					let r = vue.scale_R; //从vue中获取数据
+					//发送数据
+					sendMsg(r);
 				}
 			}
-		})
+		});
+		const ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
 		ws.onopen = function(e) {
 			console.log('连接')
 		};
 		ws.onclose = function() {
-			alert('关闭')
+			//alert('关闭')
 			console.log('关闭')
 		};
 		ws.onerror = function() {
-			alert('出错')
+			//alert('出错')
 			console.log('出错')
 		};
 		ws.onmessage = function(e) {
+			/**
+			 * status 说明
+			 * status = 1 ,子页面需要的即时数据
+			 * status = 2 ，接收数据为图片
+			 * status = 3 ，进入下一个量表
+			 * status = 4 , 初始值
+			 * status = 5 ，接受量表信息，ID号和名字
+			 * status = 6 ，设置指导语
+			 * status = 0 ，子页面所需数据包
+			 * status = 7 , 进入下一题
+			 * status = 8 ， 当前题目内容修改
+			 */
 			let data = JSON.parse(e.data)
 			console.log('有消息', data)
 			if (data.status == 5) {
+				vue.docId = data.from_who;
 				//医生发送过来的量表信息
 				vue.scaleMsg.splice(0);
 				for (let i = 0; i < data.data.length; i++) {
@@ -257,15 +215,28 @@
 					vue.scaleNumbers.push(obj.id); //量表顺序
 				}
 				vue.ststus.push(5)
-
 				vue.index = 0;
 				console.log(vue)
+			} else if (data.status == 6) {
+			
+			
+			} else if (data.status == 7) {
+				vue.itemPackage.splice(0);
+				vue.itemPackage.push(data.data)
+				console.log('接收数据包',vue.itemPackage);
+			}else if(data.status == 1){
+				vue.fastData.splice(0);
+				vue.fastData.push(data.data)
+			}else if(data.status == 0){
+				vue.dataPackage = data.data;
 			}
+			
 		};
 		ws.onbeforeunload = function() {
 			console.log('关闭')
 		}
-		function sendMsg(o){
+
+		function sendMsg(o) {
 			ws.send(JSON.stringify(o));
 		}
 	</script>

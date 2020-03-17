@@ -137,7 +137,8 @@
 	right: 80px;
 	line-height: 40px;
 	text-align: center;
-	color: rgb(214, 9, 9);font-family: SourceHanSansSC;
+	color: rgb(214, 9, 9);
+	font-family: SourceHanSansSC;
 }
 
 .on {
@@ -152,3 +153,13 @@
 .on-flex {
 	display: flex;
 }
+
+.menue-obj {
+	width: calc(100% - 40px);
+	height: calc(100% - 40px);
+	position: absolute;
+	background-color: white;
+	border-radius: 5px;
+	border: 1px solid darkgray;
+}
+

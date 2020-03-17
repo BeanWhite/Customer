@@ -1,0 +1,109 @@
+.guids {
+	width: calc(100% - 60px);
+	height: auto;
+	background-color: #008B8B;
+}
+
+
+.table-item {
+	
+	width: 40px;
+	height: 40px;
+	text-align: center;
+	line-height: 40px;
+	font-size: 30px;
+}
+.table-item-max{
+	width: 40px;
+	height: 10px;
+	text-align: center;
+	line-height: 40px;
+	font-size: 10px;
+}
+
+.table-group {
+	width: 100%;
+	height:auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.table-group-t{
+	width:70%;
+	height:auto;
+}
+.table-group-t table{
+	
+}
+.spbot{
+	margin-bottom: 50px;
+}
+.table-title {
+	padding-top: 20px;
+	padding-bottom: 5px;
+}
+
+.table-item-input {
+	width: 40px;
+	height: 40px;
+	text-align: center;
+
+	/**
+ * 去掉input默认样式
+ */
+	background: none;
+	outline: none;
+	border: none;
+	background: none;
+	outline: none;
+}
+
+.table-item-input:focus {
+	border: none;
+	background-color: #dcdcdc;
+}
+
+.msg {
+	width: auto;
+	max-width: ;
+	position: absolute;
+	height: 60px;
+	bottom: 10px;
+	background-color: #dcdcdc;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	border-radius: 5px;
+}
+.msg-item{
+	display: inline-block;
+	border-radius: 5px;
+	border: solid 1px darkgray;
+	display: inline-block;
+	width: 40px;
+	height: 40px;
+	margin-right: 5px;
+	margin-left: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.overY{
+	overflow-y: overlay;
+}
+
+.fix-table{
+	top: 90px;
+	position: fixed;
+	background-color: white;
+	width: auto;
+	display: flex;
+	justify-content: center;
+	border-bottom: ;
+}
+
+.hidden-table{
+	
+	opacity: 0;
+}

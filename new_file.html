@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<script type="text/javascript" src="js/jquery.min.js">
+			
+		</script>
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script>
+		var a =$.ajax({
+			url:'王孟鹏-毕业设计题目.docx',
+			async:false
+		});
+		
+			
+		$.ajax({
+			type:'POST',
+			url:'http://localhost:80/t/tp',
+			data:{
+				s:888
+			},
+			success:function(e){
+				console.log(e)
+				
+			},error:function(){
+			}
+		})
+		console.log(a)
+	</script>
+</html>
