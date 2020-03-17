@@ -19,7 +19,7 @@
 			工具栏
 		</div>
 		<ul class="tools-box">
-			<li class="tools-items"  onclick="pen()">
+			<li class="tools-items"  onclick="pen1()">
 				<img src="../svg/pen_gray.svg" id="pen" alt="0"/>
 				<span>画笔</span>
 			</li>
@@ -169,6 +169,7 @@ function home(){
 	 * 使用橡皮檫
 	 */
 	function G_eraser(){
+	
 		if(eraser.alt == 0){//打开橡皮
 			if(isPen){
 					pencile.src = '../svg/pen_gray.svg';
@@ -190,7 +191,8 @@ function home(){
 	/**
 	 * 画笔处于激活状态可以绘画
 	 */
-	function pen(){
+	function pen1(){	
+		
 		if(pencile.alt == 0){//打开画笔
 			if(isEraser){
 				eraser.src = '../svg/eraser_gray.svg';
@@ -202,11 +204,13 @@ function home(){
 			isPen = true;
 			pen_color = 'black';
 			pen_width = 2;
+	
 		}else{
 			pencile.src = '../svg/pen_gray.svg';
 			pencile.alt=0;
 			isPen = false;
 		}
+		
 	}
 	
 	/**
