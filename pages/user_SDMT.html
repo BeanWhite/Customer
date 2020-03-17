@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" type="text/css" href="../css/init.css" />
+		<link rel="stylesheet" type="text/css" href="../css/sdmt.css" />
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery.min.js"></script>
+		<script src="../js/texConfig.js"></script>
+	</head>
+	<body>
+		<div class="content">
+			<div class="page-content">
+				<div class="page-content-title title-blue">
+					量表名称：符号数字转换测验
+				</div>
+				<div class="page-content-main overY">
+					<div class="title-box-center title-blue">
+						符号数字转换测验
+					</div>
+					<div class="guids" v-if="pos==0">
+						<span class="title-blue" style="font-size: 15px;">指导语：</span><span class="text-black" style="font-size: 15px;">{{guids}}</span>
+					</div>
+					<div class="table-group" v-if="pos==0">
+						<div class="table-title title-blue">
+							键值表
+						</div>
+						<table border="1">
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item">{{it.value}}</td>
+							</tr>
+						</table>
+					</div>
+
+					<div class="table-group " v-if="pos==0">
+						<div class="table-title title-blue">
+							例题
+						</div>
+						<table border="1">
+							<tr>
+								<td v-for="(it,index) in getTestData" class="table-item">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getTestData" class="table-item">
+									<input class="table-item-input" v-model="inputModel[index]" readonly="readonly" @focusout="inputFocusOut(index)"
+									 @focus="inputFocus(index)" />
+								</td>
+							</tr>
+						</table>
+					</div>
+
+					<div class="table-group-t spbot fix-table" v-if="pos==1">
+						<table border="1" style="">
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.value}}</td>
+							</tr>
+						</table>
+					</div>
+					<table border="1" class="table-group-t spbot hidden-table" v-if="pos==1">
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
+						</tr>
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.value}}</td>
+						</tr>
+					</table>
+
+					<table border="1" v-for="(i,n) in a" class="table-group-t spbot" v-if="pos==1">
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
+						</tr>
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">
+								<input class="table-item-input" v-model="testModel[0][2]" readonly="readonly" @focusout="inputFocusOut(index)"
+									 @focus="inputFocus(index)" /></td>
+						</tr>
+					</table>
+
+
+					<div class="msg" v-if="inputPos>-2">
+						<span v-for="(it,index) in getI" v-on:click="addn(it,'testModel')" class="msg-item">{{it}}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</body>
+	<script>
+		console.log(parent.vue.itemPackage)
+		let vue = new Vue({
+			el: '.content',
+			data: {
+				a: [1, 1, 1, 1, 1],
+				dataPackage: $.ajax({
+					url: "../JSON/sdmt.json",
+					async: false
+				}).responseJSON,
+				pos: 1,
+				guids: sdmt_guid, //指导语
+				inputModel: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+				testModel:[
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+				],
+				inputPos: -2, //input聚焦位置，默认-1表示未聚焦
+				copInputPos: -2, //inputPos复制版
+			},
+			created() {
+
+			},
+			methods: {
+				addn: function(it,objName) {
+					if(objName=='testModel'){
+						
+					}
+					this.inputModel.splice(this.inputPos, 1, it);
+					this.inputPos = -2;
+				},
+				inputFocus: function(e) {
+					this.inputPos = e;
+				},
+				inputFocusOut: function(e) {
+					let that = this;
+					setTimeout(() => {
+						that.inputPos = -2;
+					}, 1)
+
+				}
+			},
+			computed: {
+				getRandomTest: function() { //获取所有测试数据
+					if (this.dataPackage) {
+						return this.dataPackage.RandomTest;
+					} else return null;
+				},
+				getKeyValue: function() { //获取键值对{}类型
+					if (this.dataPackage) {
+						let arr = [];
+						for (let i in this.dataPackage.keyData) {
+							let o = {};
+							o.key = i;
+							o.value = this.dataPackage.keyData[i];
+							arr.push(o)
+						}
+
+						return arr;
+					} else return null;
+				},
+				getValueKey: function() { //获取值键对{}类型
+					if (this.dataPackage) {
+						return this.dataPackage.valueData;
+					} else return null;
+				},
+				getTestData: function() { //获取练习
+					if (this.dataPackage) {
+						return this.dataPackage.testData;
+					} else return null;
+				},
+				getI: function() {
+					let arr = [];
+					for (let i = 1; i < 9; i++)
+						arr.push(i)
+
+					arr.push("")
+					return arr;
+				}
+			},
+			watch: {
+				dataPackage: {
+					handler(newa, oldb) {
+						console.log('pack修改', newa, oldb)
+					},
+					deep: true,
+					immediate: false
+				}
+			}
+		})
+
+		Object.defineProperty(parent.window.vue, "dataPackage", {
+
+			get() {
+
+			},
+			set(e) {
+				vue.dataPackage = e;
+				console.log(JSON.stringify(e))
+			}
+		})
+	</script>
+</html>
