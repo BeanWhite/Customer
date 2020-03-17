@@ -117,8 +117,8 @@
 				 * 点击开始测评
 				 */
 				startTest: function() {
-					this.Npage.push("14");
-					this.Npage.push("user_SDMT.html?222");
+					this.Npage.push("15");
+					this.Npage.push("user_CWT.html?222");
 					this.styles.pageZindex.zIndex = 3;
 					/**
 					 * 打开题目信息弹窗
@@ -218,21 +218,24 @@
 				vue.index = 0;
 				console.log(vue)
 			} else if (data.status == 6) {
-			
-			
+				vue.guids = data.data;
 			} else if (data.status == 7) {
 				vue.itemPackage.splice(0);
 				vue.itemPackage.push(data.data)
+				
 				console.log('接收数据包',vue.itemPackage);
 			}else if(data.status == 1){
 				vue.fastData.splice(0);
 				vue.fastData.push(data.data)
 			}else if(data.status == 0){
 				vue.dataPackage = data.data;
+				if(data.data.guid){}
+					vue.guids = data.data.guid;
 			}
 			
 		};
-		ws.onbeforeunload = function() {
+		window.onbeforeunload = function() {
+			ws.close()
 			console.log('关闭')
 		}
 

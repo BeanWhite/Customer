@@ -89,7 +89,7 @@
 						</table>
 					</div>
 					<div class="msg" v-if="inputPos>-2">
-						<span v-for="(it,index) in getI" v-on:click="addn(it,'testModel')" class="msg-item">{{it}}</span>
+						<span v-for="(it,index) in getI" v-on:click="addn(it)" class="msg-item">{{it}}</span>
 					</div>
 					<div v-if="!getKeyValue">
 						请叫医生刷新平板
@@ -137,11 +137,10 @@
 
 			},
 			methods: {
-				addn: function(it, objName) {
+				addn: function(it) {
 					if (this.isEnd)
 						return
-
-					if (objName == 'testModel') {
+					if (this.pos == 1) {
 						this.testModel[this.inputPosN].splice(this.inputPos, 1, it)
 					} else {
 						this.inputModel.splice(this.inputPos, 1, it);
@@ -253,6 +252,23 @@
 					deep: true,
 					immediate: false
 				},
+				inputModel:{
+					handler(a,b){
+						let o = {
+							target:parent.window.vue.docId,
+							data:{
+								y:this.y,
+								value:this.inputModel[this.y]
+							},
+							status:1,
+							from_who:parent.window.parent.USER_ID,
+							dataOptions:0
+						}
+						console.log(o)
+						parent.window.sendMsg(o)
+					}
+				}
+				
 
 			}
 		})
