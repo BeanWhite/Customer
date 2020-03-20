@@ -4,13 +4,14 @@
 		<meta charset="utf-8">
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
-		<link href="../css/mui.min.css" rel="stylesheet" />
+		<!-- <link href="../css/mui.min.css" rel="stylesheet" /> -->
 		<link href="../css/init.css" rel="stylesheet" />
 		<link href="../css/menue.css" rel="stylesheet" />
-		<script src="../js/mui.min.js"></script>
+		<!-- <script src="../js/mui.min.js"></script> -->
 		<script src="../js/config.js"></script>
 		<script src="../js/toJump.js"></script>
-		<script src="../js/vue.min.js"></script>
+		<!-- <script src="../js/vue.min.js"></script> -->
+		<script src="../js/vue.js"></script>
 		<script src="../js/jquery.min.js"></script>
 	</head>
 	<body style="overflow: hidden;">
@@ -34,14 +35,15 @@
 			<div id="history" v-on:click="getHistory()">
 				历史报告
 			</div>
-			<object class="menue-obj" :data="Npage[1]" id="html-box" :style="styles.pageZindex"></object>
+			<!-- <object class="menue-obj" :data="Npage[1]" id="html-box" :style="styles.pageZindex"></object> -->
+			<object class="menue-obj" :data="webs[pos]" id="html-box" :style="styles.pageZindex" v-if="webs.length>0"></object>
 		</div>
-<button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;z-index: 1000;">刷新</button>
-	<script>
-		function a() {
-		location.reload(true)
-	}
-	</script>
+		<!-- <button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;z-index: 1000;">刷新</button> -->
+		<script>
+			function a() {
+				location.reload(true)
+			}
+		</script>
 	</body>
 	<!-- 页面状态值说明：5->打开量表信息弹窗, 4->重新设置当前页面  -->
 	<script>
@@ -53,9 +55,9 @@
 			data: {
 				a: '',
 				b: '',
-				docId:"22",	//默认为空字符串
+				docId: "22", //默认为空字符串
 				pages: null,
-				fastData:[],	//子页面需要的即时数据
+				fastData: [], //子页面需要的即时数据
 				itemPackage: [], //子页面数据包
 				scaleNumbers: [], //量表顺序编号
 				index: '', //当前编号
@@ -78,13 +80,19 @@
 				scale_R: { //各个量表子页面的结果对象,直接发送到服务器，由服务器判断是否需要在服务器中处理
 					'20': '',
 				},
-				dataPackage:{},
+				dataPackage: {},
+				pos:0,//当前网页位置
+				webs:[]	,//网页url
+				noStatus:null,	//websocket接收的没有状态属性的数据
 			},
 			created() {
 				this.pages = $.ajax({
 					url: "../JSON/urlConfig.json",
 					async: false
 				}).responseJSON.pages;
+				
+				
+				
 			},
 			watch: {
 				scale_R: {
@@ -96,12 +104,12 @@
 					deep: true,
 					immediate: false
 				},
-				dataPackage:{
-					handler(a,b){
-						console.log('menue修改',a,b)
+				dataPackage: {
+					handler(a, b) {
+						console.log('menue修改', a, b)
 					},
-					deep:true,
-					immediate:false
+					deep: true,
+					immediate: false
 				}
 			},
 			methods: {
@@ -112,24 +120,31 @@
 						this.isDialog.splice(ind, 1);
 					if (e == 5)
 						this.testPages();
+						this.styles.pageZindex.zIndex = 3;
 				},
 				/**
 				 * 点击开始测评
 				 */
 				startTest: function() {
-					this.Npage.push("15");
-					this.Npage.push("user_CWT.html?222");
-					this.styles.pageZindex.zIndex = 3;
+					// this.Npage.push("15");
+					// this.Npage.push("user_CWT.html?222");
+					//this.styles.pageZindex.zIndex = 3;
 					/**
 					 * 打开题目信息弹窗
+					 * 
 					 */
+					
+					console.log(this.webs,'当前待使用的页面')
 					let ind = this.isDialog.indexOf(5);
 					let ind2 = this.ststus.indexOf(5)
 					if (ind2 > -1) {
 						this.isDialog.push(5);
 						this.ststus.splice(ind2, 1);
-					} else if (ind > -1)
+						// this.styles.pageZindex.zIndex = 3;
+					} else if (ind > -1){
 						this.isDialog.splice(ind, 1);
+						// this.styles.pageZindex.zIndex = 3;
+					}	
 					else if (ind2 < 0) {
 						alert("现在还没有评估")
 					}
@@ -143,7 +158,6 @@
 					this.pages[this.scaleNumbers[this.index]]; //获取第一个量表的id,并从pages中获取url；
 					this.Npage.push(this.scaleNumbers[this.index]); //id号
 					this.Npage.push(this.pages[this.scaleNumbers[this.index]]); //url
-					console.log(this)
 					if (this.Npage.length > 0)
 						this.styles.pageZindex.zIndex = 3;
 				},
@@ -201,7 +215,25 @@
 			 */
 			let data = JSON.parse(e.data)
 			console.log('有消息', data)
-			if (data.status == 5) {
+			console.log(vue,'vue控制器')
+			if (data.status == 0) {	//设置子页面需要的数据包
+				vue.dataPackage = data.data;
+				if (data.data.guid) 
+				vue.guids = data.data.guid;
+			} else if (data.status == 1) {//设置即时数据
+				console.log(vue.fastData,'即时数据')
+				vue.fastData.splice(0);
+				vue.fastData.push(data.data)
+			} else if (data.status == 3) {
+				if(vue.pos+1>=vue.webs.length){
+					console.log('跳转到结束页面')
+					alert('您已全部完成')
+					vue.webs.splice(0)
+					return
+				}
+				vue.pos++;
+			} 
+			else if (data.status == 5) {	//设置发布的量表信息
 				vue.docId = data.from_who;
 				//医生发送过来的量表信息
 				vue.scaleMsg.splice(0);
@@ -209,30 +241,37 @@
 					let obj = {};
 					obj.id = data.data[i].aiScaleId;
 					obj.name = data.data[i].aiScaleName;
-
+					/**
+					 * 设置页面所需url
+					 */
+					let pa={
+						"5":"user_ADAS.html?",
+						"11":"user_clock.html?",
+						"12":"other.html?",
+						"13":"other.html?",
+						"14":"user_SDMT.html?",
+						"15":"user_CWT.html?",
+						"19":"other.html?",
+						"20":"user_ligature.html?"		
+					}
+					vue.webs.push(pa[obj.id]+USER_ID);
 					vue.scaleMsg.push(obj); //量表信息
-
 					vue.scaleNumbers.push(obj.id); //量表顺序
 				}
 				vue.ststus.push(5)
 				vue.index = 0;
-				console.log(vue)
-			} else if (data.status == 6) {
+				
+			} 
+			else if (data.status == 6) {	//设置指导语
 				vue.guids = data.data;
-			} else if (data.status == 7) {
+			} else if (data.status == 7) {	//进入下一题
 				vue.itemPackage.splice(0);
 				vue.itemPackage.push(data.data)
-				
-				console.log('接收数据包',vue.itemPackage);
-			}else if(data.status == 1){
-				vue.fastData.splice(0);
-				vue.fastData.push(data.data)
-			}else if(data.status == 0){
-				vue.dataPackage = data.data;
-				if(data.data.guid){}
-					vue.guids = data.data.guid;
+				console.log('接收数据包', vue.itemPackage);
+			}else if(data.status = -1){
+				let a = JSON.stringify(data)
+				vue.noStatus = JSON.parse(a)
 			}
-			
 		};
 		window.onbeforeunload = function() {
 			ws.close()

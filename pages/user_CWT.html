@@ -99,20 +99,12 @@
 			set(e) {
 				console.log('datapack设置', e)
 				console.log(parent.window.vue.guids)
+				
 				vue.dataPackage = e;
 			}
 		})
 
-		Object.defineProperty(parent.window.vue, "fastData", {
-			get() {
-
-			},
-			set(e) {
-				console.log('fastData-Obj', e)
-				
-				vue.fast = e;
-			}
-		})
+	
 		Object.defineProperty(parent.window.vue,"guids",{
 			get() {
 			

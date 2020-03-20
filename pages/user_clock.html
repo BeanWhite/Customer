@@ -17,7 +17,7 @@
 		<!-- 画板 -->
 		<div class="canvas-box">
 			<div class="canvas-box-title">
-				<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:{{3}</span>
+				<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:画钟测验</span>
 			</div>
 			
 			<div class="canvas-box-tools">
@@ -44,7 +44,7 @@
 				</ul>
 			</div>
 			
-			<div class="ex-img">
+			<div class="ex-img off">
 				<div class="ex-img-title">示例：</div>
 				<img class="ex-img-value"  />
 			</div>
@@ -54,28 +54,62 @@
 			<canvas id="myCanvas"></canvas>
 		</div>
 	
-		<button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button>
+		<!-- <button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button> -->
 	</body>
 	<script>
 		function ppp(){
 			location.reload(true)
 		}
-		
-		
+		/**
+		 * 获取例图节点
+		 */
+		let ii = document.getElementsByClassName('ex-img')[0];
+		let ew = document.getElementsByClassName('ex-img-value')[0];
 		let ItemPage = {
 			isSession:true, //定义是否为独立页面，默认是
 			showPic:false	,//定义是否展示图片,默认否
 			picUrl:["../images/oval.png","../images/cross.png","../images/rhombus.png","../images/cube.png"]
 		}
 		$(document).ready(function(){
-			if(parent.vue){
-				ItemPage.isSession = false;
-				ItemPage.showPic = true;
-				ii.style.zIndex = "20";
-				ew.src =ItemPage.picUrl[0]
+			if(parent.window.vue){
+				if(parent.window.vue.pac_4){
+					ItemPage.isSession = false;
+					ItemPage.showPic = true;
+					ii.style.zIndex = "20";
+					ew.src =ItemPage.picUrl[0]
+				}else{
+					websocket = new WebSocket(config.wsURL + '/websocket/' + '*****')
+				}
+				
+				
 			}
-			else
-				websocket = new WebSocket(config.wsURL + '/websocket/' + 222)
+			
+				if(websocket){
+					websocket.binaryType = "arraybuffer"
+					websocket.onopen = function(e) {
+					console.log('建立连接')
+					//websocket.binaryType = 'arraybuffer'	//传送arraybuffer字符串
+					}
+					websocket.onclose = function(e) {
+					
+						console.log('连接关闭')
+					}
+					websocket.onmessage = function(e) {
+					
+						console.log("有消息推送", e.data, '***');
+					}
+					websocket.onerror = function() {
+						console.log('建立连接出错')
+						alert('连接出错1')
+					}
+					//窗口关闭
+					window.onbeforeunload = function() {
+						websocket.close();
+					}
+					
+				}
+			
+				
 		})	
 		/**
 		 * 要设置为在画布中有记录之后才能发送消息
@@ -271,6 +305,7 @@
 		 * 鼠标开始移动
 		 */
 		function mouseMoveAction(e) {
+			
 			if(isPen == false&& isEraser == false)
 			return
 			if (isMouseDown) {
@@ -354,34 +389,11 @@
 		 * websocket连接
 		 */
 		var websocket = null;
-		if(websocket){
-			websocket.binaryType = "arraybuffer"
-			websocket.onopen = function(e) {
-			console.log('建立连接')
-			//websocket.binaryType = 'arraybuffer'	//传送arraybuffer字符串
-			}
-			websocket.onclose = function(e) {
-			
-				console.log('连接关闭')
-			}
-			websocket.onmessage = function(e) {
-			
-				console.log("有消息推送", e.data, '***');
-			}
-			websocket.onerror = function() {
-				console.log('建立连接出错')
-				alert('连接出错1')
-			}
-			//窗口关闭
-			window.onbeforeunload = function() {
-				websocket.close();
-			}
-	
-		}
+		
 		
 		function sendMSG(str) {
-			
-			if(ItemPage.isSession){
+			console.log(ItemPage)
+			if(ItemPage.isSession==true){
 				//发送消息是截断处理
 				//var str = da + '';
 				var strArr = [];
@@ -415,20 +427,28 @@
 			
 		}
 		
-		let ii = document.getElementsByClassName('ex-img')[0];
-		let ew = document.getElementsByClassName('ex-img-value')[0];
+	
 		let arr = [];//
-		Object.defineProperty(parent.window.vue.pac_4,"f",{
-			get(){
-				
-			},
-			set(e){
-					ew.src = ItemPage.picUrl[e[0]]
-					if(arr.indexOf(e[0])<0){
-						arr.push(e[0]);
-						clear_canvas();
+		if(parent.window.vue){
+			if(parent.window.vue.pac_4){
+				document.getElementsByClassName('canvas-box-title')[0].style.display = 'none'
+				document.getElementsByClassName('ex-img')[0].style.position = 'absolute'
+				document.getElementsByClassName('ex-img')[0].style.display = 'flex'
+				ItemPage.isSession = false;//设为非独立页面
+				Object.defineProperty(parent.window.vue.pac_4,"f",{
+					get(){
+						
+					},
+					set(e){
+							ew.src = ItemPage.picUrl[e[0]]
+							if(arr.indexOf(e[0])<0){
+								arr.push(e[0]);
+								clear_canvas();
+						}
 					}
+				})
 			}
-		})
+		}
+		
 	</script>
 </html>

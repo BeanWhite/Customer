@@ -20,7 +20,7 @@
 				</div>
 				<div class="page-content-main">
 					<div class="title-box-center title-blue">
-						{{titileName}}{{testNo}}
+						{{titileName}}
 					</div>
 					<div class="mainMargin">
 						<div class="title-box-between">
@@ -29,7 +29,7 @@
 						<div class="mainMargin-content stay-center">
 							<span v-if="testNo==1" class="font-large">{{timerEnd?"":getFastData}}</span>
 
-							<img v-if="testNo==2" :src="getFastData">
+							<img v-if="testNo==2" :src="getFastData" width="400">
 
 							<span v-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
 							<div class="full" v-if="testNo==7">

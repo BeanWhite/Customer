@@ -40,26 +40,26 @@
 	</div>
 	<span style="position: fixed;top: 70px; z-index: 11; margin-left: 50%;">画板</span>
 	<canvas id="myCanvas"></canvas>
-	<input type="" name="" id="inp" value="" style="position: fixed;top: 50px;left: 200px;z-index: 200;" />
+	<!-- <input type="" name="" id="inp" value="" style="position: fixed;top: 50px;left: 200px;z-index: 200;" /> -->
 </div>
 
-<button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button>
+<!-- <button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button> -->
 <script> 
-//let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
-let USER_ID = 222;
+let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+//let USER_ID = 222;
 let DOC_ID = 22;
 function ppp(){
 	location.reload(true)
 }
 function home(){
-	let obj  = {
-		target:22,
-		status:201,
-		from_who:USER_ID,
-		data:Cpath
-	};
-	parent.window.vue.scale_R['20'] = obj;
-	console.log(parent.window.vue)
+	// let obj  = {
+	// 	target:parent.window.vue.docId,
+	// 	status:201,
+	// 	from_who:USER_ID,
+	// 	data:Cpath
+	// };
+	// parent.window.vue.scale_R['20'] = obj;
+	// console.log(parent.window.vue)
 }
 </script>
 
@@ -68,7 +68,7 @@ function home(){
 	/**
 	 * ！！！！要设置为在画布中有记录之后才能发送消息！！！！
 	 */
-	var inp = document.getElementById('inp');
+	//var inp = document.getElementById('inp');
 	var eraser = document.getElementById('eraser');
 	var pencile = document.getElementById('pen');
 	var getW = document.getElementById('getW');
@@ -330,7 +330,7 @@ function home(){
 			y1 = (e.touches[0].pageY - Ly) * ratioY;
 			let d = getDistance(x1,y1);
 			if(d!=""){
-				inp.value = d;
+				//inp.value = d;
 				if(Cpath.length>0){
 					if(d!=Cpath[Cpath.length-1]){
 						if(Cpath.indexOf(d)<0){
@@ -340,7 +340,7 @@ function home(){
 				}else{
 					Cpath.push(d);
 				}
-			}else inp.value = ""
+			}
 			drowLine(x, y, x1, y1);
 			flag++;
 			if (flag == 10000)
@@ -387,7 +387,7 @@ function home(){
 			//否则，我们需要使用IE的方式来取消事件冒泡 
 			window.event.cancelBubble = true;
 		
-		console.log(imgStack)
+		//console.log(imgStack)
 	}
 	/**
 	 * 画线
@@ -420,31 +420,12 @@ function home(){
 	/**
 	 * websocket连接
 	 */
-	var websocket = null;
-	websocket = new WebSocket(config.wsURL + '/websocket/' + USER_ID)
-	websocket.binaryType = "arraybuffer"
-	websocket.onopen = function(e) {
-		console.log('建立连接')
-		//websocket.binaryType = 'arraybuffer'	//传送arraybuffer字符串
-	}
-	websocket.onclose = function(e) {
-
-		console.log('连接关闭')
-	}
-	websocket.onmessage = function(e) {
-		let p;
-		let data;
-		console.log(e)
-		try {
-			data = JSON.parse(e.data);
-			p = JSON.parse(e.data).data;
-		} catch (e) {
-			return
-			//TODO handle the exception
-		}
-		console.log(data)
-		if (data.status == 0) {
-			console.log(data)
+	function hasMessage(e) {
+		let p = e.data;
+		let data = e;
+		
+		
+		if (data.ot == 0) {
 			status = data.data;
 			bot.height = bot.height;
 			imgStack.splice(0, imgStack.length);
@@ -456,7 +437,7 @@ function home(){
 			});
 			sendMSG();
 		
-		} else if (data.status == 1) {
+		} else if (data.ot == 1) {
 			if (status == 1)
 				Circle = C.Circle_1;
 			else if (status == 2)
@@ -465,10 +446,9 @@ function home(){
 				Circle = C.Circle_3;
 			else
 				Circle = C.Circle_4;
+			console.log('%%%%%%%%')
 			for (i in Circle) {
 				if (Circle[i].value == p) {
-					
-					
 					context.font = "20px Arial";
 					//添加文字
 					if (parseInt(Circle[i].value) > 9)
@@ -492,41 +472,54 @@ function home(){
 					}, 1000);
 					break;
 				}
-		
 			}
+			
 		}
-		console.log("有消息推送", e.data, '***');
-	}
-	websocket.onerror = function() {
-		console.log('建立连接出错')
-		alert('连接出错1')
-	}
-	//窗口关闭
-	window.onbeforeunload = function() {
-		websocket.close();
+		console.log("有消息推送", data, '***');
 	}
 
+
+
 	function sendMSG(str) {
+		/**
+		 * 使用undertow作为容器不需要截断处理
+		 */
+		let o = {
+			target:parent.window.vue.docId,
+			data:str,
+			ot:Cpath
+		}
+		parent.window.sendMsg(o)
+		//websocket.send(JSON.stringify(o))
 		//发送消息是截断处理
 		//var str = da + '';
-		var strArr = [];
-		//消息发送目标用户
-		//var targetUsers = ['123'];
-		if (str.length > 7000) {
-			for (let i = 0, index = 0; i < str.length; index++, i += 7000) {
-				strArr[index] = str.slice(i, i + 7000);
-			}
-		} else {
-			strArr[0] = str;
-		}
-		for (let i = 0; i < strArr.length; i++) {
-			let obj = {};
-			obj.target = 22;
-			obj.data = strArr[i];
-			obj.incise = true;
-			if (i == strArr.length - 1)
-				obj.endIncise = true;
-			websocket.send(JSON.stringify(obj));
-		}
+		// var strArr = [];
+		// //消息发送目标用户
+		// //var targetUsers = ['123'];
+		// if (str.length > 7000) {
+		// 	for (let i = 0, index = 0; i < str.length; index++, i += 7000) {
+		// 		strArr[index] = str.slice(i, i + 7000);
+		// 	}
+		// } else {
+		// 	strArr[0] = str;
+		// }
+		// for (let i = 0; i < strArr.length; i++) {
+		// 	let obj = {};
+		// 	obj.target = 22;
+		// 	obj.data = strArr[i];
+		// 	obj.incise = true;
+		// 	if (i == strArr.length - 1)
+		// 		obj.endIncise = true;
+		// 	websocket.send(JSON.stringify(obj));
+		// }
 	}
+	
+	Object.defineProperty(parent.window.vue,"noStatus",{
+		get(){
+			
+		},set(e){
+			console.log('接收无状态消息',e)
+			hasMessage(e);
+		}
+	})
 </script>

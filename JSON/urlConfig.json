@@ -2,11 +2,11 @@
 	"pages":{
 		"5":"user_ADAS.html?",
 		"11":"user_clock.html?",
-		"12":"user_other.html?",
-		"13":"user_other.html?",
+		"12":"other.html?",
+		"13":"other.html?",
 		"14":"user_SDMT.html?",
 		"15":"user_CWT.html?",
-		"19":"user_other.html?",
+		"19":"other.html?",
 		"20":"user_ligature.html?"		
 	}
 }
