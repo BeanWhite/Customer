@@ -12,7 +12,7 @@
 		<div class="content">
 			<div class="page-content">
 				<div class="page-content-title title-blue">
-					量表名称：stoop色词测验
+					量表名称：Stroop色词测验
 				</div>
 
 				<div v-if="pos==-1" class="page-content-main" style="display: flex;align-items: center;justify-content: center;font-size: 50px;">
@@ -78,6 +78,7 @@
 			watch: {
 				dataPackage: {
 					handler(a, b) {
+						
 						console.log('vue-dataPac', this.dataPackage)
 					},
 					deep: true,
@@ -112,7 +113,8 @@
 			set(e) {
 				console.log('guid-Obj', e)
 				vue.guid = e;
-				vue.pos++;
+				if(vue.pos<2)
+					vue.pos++;
 			}
 		})
 	</script>
