@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" type="text/css" href="../css/init.css" />
+		<link rel="stylesheet" type="text/css" href="../css/sdmt.css" />
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery.min.js"></script>
+		<script src="../js/texConfig.js"></script>
+	</head>
+	<body>
+		<div class="content">
+			<div class="page-content">
+				<div class="page-content-title title-blue">
+					量表名称：符号数字转换测验
+				</div>
+				<div class="page-content-main overY">
+					<div class="title-box-center title-blue">
+						符号数字转换测验
+					</div>
+					<div class="guids" v-if="pos==0">
+						<span class="title-blue" style="font-size: 15px;">指导语：</span><span class="text-black" style="font-size: 15px;">{{guids}}</span>
+					</div>
+					<div class="table-group" v-if="pos==0">
+						<div class="table-title title-blue">
+							键值表
+						</div>
+						<table border="1">
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item">{{it.value}}</td>
+							</tr>
+						</table>
+					</div>
+					<div class="table-group " v-if="pos==0">
+						<div class="table-title title-blue">
+							例题
+						</div>
+						<table border="1">
+							<tr>
+								<td v-for="(it,index) in getTestData" class="table-item">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getTestData" class="table-item">
+									<input class="table-item-input" v-model="inputModel[index]" readonly="readonly" @focusout="inputFocusOut(index)"
+									 @focus="inputFocus(index)" />
+								</td>
+							</tr>
+						</table>
+					</div>
+					<!-- 固定位置 -->
+					<div class="table-group-t spbot fix-table" v-if="pos==1">
+						<table border="1" style="">
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.value}}</td>
+							</tr>
+						</table>
+					</div>
+					<!-- 隐藏部分 -->
+					<table border="1" class="table-group-t spbot hidden-table" v-if="pos==1">
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.key}}</td>
+						</tr>
+						<tr>
+							<td v-for="(it,index) in getKeyValue" class="table-item-max">{{it.value}}</td>
+						</tr>
+					</table>
+					<!-- 做题内容 -->
+					<div class="table-group-box spbot"  v-for="(i,n) in getRandomTest" v-if="pos==1">
+						<span class="ati">第{{n+1}}题</span>
+						<table border="1" class="table-group-t " v-if="pos==1">
+							<tr>
+								<td v-for="(it,index) in i" class="table-item-max">
+									<span>{{it.key}}</span>
+
+								</td>
+							</tr>
+							<tr>
+								<td v-for="(it,index) in i" class="table-item-max">
+									<input class="table-item-input" v-model="testModel[n][index]" readonly="readonly" @focusout="inputFocusOut(index,n)"
+									 @focus="inputFocus(index,n)" />
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="msg" v-if="inputPos>-2">
+						<span v-for="(it,index) in getI" v-on:click="addn(it)" class="msg-item">{{it}}</span>
+					</div>
+					<div v-if="!getKeyValue">
+						请叫医生刷新平板
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</body>
+	<script>
+		let vue = new Vue({
+			el: '.content',
+			data: {
+				a: [1, 1, 1, 1, 1, 1, 1, 1],
+				dataPackage: $.ajax({
+					url: "../JSON/sdmt.json",
+					async: false
+				}).responseJSON,
+				pos: 0,
+				guids: sdmt_guid, //指导语
+				inputModel: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+				testModel: [
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+					["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+				],
+				inputPos: -2, //input聚焦位置，默认-2表示未聚焦
+				inputPosN: -2, //做题时被点击的组号，默认-2表示未点击
+				copInputPos: -2, //inputPos复制版
+				reBack: null,
+				isEnd: false, //测试是否结束
+				fastData: parent.vue.fastData,
+				x: -1,
+				y: -1
+			},
+			created() {
+
+			},
+			methods: {
+				addn: function(it) {
+					if (this.isEnd)
+						return
+					if (this.pos == 1) {
+						this.testModel[this.inputPosN].splice(this.inputPos, 1, it)
+					} else {
+						this.inputModel.splice(this.inputPos, 1, it);
+					}
+					this.inputPosN = -2;
+					this.inputPos = -2;
+				},
+				inputFocus: function(e, n) {
+					if (this.isEnd)
+						return
+					this.x = n;
+					this.y = e;
+					clearTimeout(this.reBack);
+					this.inputPos = e;
+					if (n != null) {
+						this.inputPosN = n;
+					}
+
+				},
+				inputFocusOut: function(e, n) {
+					if (this.isEnd)
+						return
+					let that = this;
+					this.reBack = setTimeout(() => {
+						that.inputPos = -2;
+						if (n)
+							that.inputPosN = -2;
+					}, 1)
+
+				}
+			},
+			computed: {
+				getRandomTest: function() { //获取所有做题数据
+					if (this.dataPackage) {
+						return this.dataPackage.RandomTest;
+					} else return null;
+				},
+				getKeyValue: function() { //获取键值对{}类型
+					if (this.dataPackage) {
+						let arr = [];
+						for (let i in this.dataPackage.keyData) {
+							let o = {};
+							o.key = i;
+							o.value = this.dataPackage.keyData[i];
+							arr.push(o)
+						}
+
+						return arr;
+					} else return null;
+				},
+				getValueKey: function() { //获取值键对{}类型
+					if (this.dataPackage) {
+						return this.dataPackage.valueData;
+					} else return null;
+				},
+				getTestData: function() { //获取练习
+					if (this.dataPackage) {
+						return this.dataPackage.testData;
+					} else return null;
+				},
+				getI: function() {
+					let arr = [];
+					for (let i = 1; i <= 9; i++)
+						arr.push(i)
+
+					arr.push("")
+					return arr;
+				}
+			},
+			watch: {
+				dataPackage: {
+					handler(newa, oldb) {
+						for(let i=0;i<this.testModel.length;i++){
+							for(let j=0;j<this.testModel[i].length;j++){
+								this.testModel[i].splice(j,1,"")
+							}
+						}
+						console.log('pack修改', newa, oldb);
+					},
+					deep: true,
+					immediate: false
+				},
+				fastData: {
+					handler(newa, oldb) {
+						console.log('fast改变')
+						if(this.pos!=newa[0])
+							this.pos = newa[0]
+						
+					},
+					deep: true,
+					immediate: false
+				},
+				testModel: {
+					handler(newa, oldb) {
+						console.log('model改变');
+						let o = {
+							target: parent.window.vue.docId,
+							data: {
+								x: this.x,
+								y: this.y,
+								value: this.testModel[this.x][this.y]
+							},
+							status: 1,
+							from_who: parent.window.parent.USER_ID,
+							dataOptions: 1
+						}
+						parent.window.sendMsg(o);
+					},
+					deep: true,
+					immediate: false
+				},
+				inputModel:{
+					handler(a,b){
+						let o = {
+							target:parent.window.vue.docId,
+							data:{
+								y:this.y,
+								value:this.inputModel[this.y]
+							},
+							status:1,
+							from_who:parent.window.parent.USER_ID,
+							dataOptions:0
+						}
+						console.log(o)
+						parent.window.sendMsg(o)
+					}
+				}
+				
+
+			}
+		})
+
+		Object.defineProperty(parent.window.vue, "dataPackage", {
+
+			get() {
+
+			},
+			set(e) {
+				//if(e.RandomTest.length!=0)
+					vue.dataPackage = e;
+				console.log(e,'dataPac改变')
+			}
+		})
+	</script>
+</html>

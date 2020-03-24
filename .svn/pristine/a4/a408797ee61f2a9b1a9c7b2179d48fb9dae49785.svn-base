@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="../css/init.css" />
+		<link rel="stylesheet" type="text/css" href="../css/cwt.css" />
+		<script src="../js/jquery.min.js"></script>
+		<script src="../js/vue.min.js" type="text/javascript" charset="utf-8"></script>
+		<title></title>
+	</head>
+	<body>
+		<div class="content">
+			<div class="page-content">
+				<div class="page-content-title title-blue">
+					量表名称：Stroop色词测验
+				</div>
+
+				<div v-if="pos==-1" class="page-content-main" style="display: flex;align-items: center;justify-content: center;font-size: 50px;">
+					等待医生操作
+					
+				</div>
+				<div class="page-content-main" v-else>
+					<div class="t-title title-blue">
+						指导语
+					</div>
+					<div class="guid-conten  text-black">
+						{{guid}}
+					</div>
+					<div class="table-box">
+						<span class="myt">{{titleName[pos]}}</span>
+						<table border="1" cellpadding="5" class="little-title-darkgray colorTable">
+							<tr class="table-line" v-for="(it,index) in getRandomTest">
+								<td class="table-line-item" v-for="(i,index_2) in it" :style="{color:(pos==2?i.colorGroup[getColor[index][index_2]]:'')}">
+									{{
+											pos == 0 ?i.value:(pos == 1?'':i.value)
+									}}
+									<!-- {{Math.round(Math.random()*10)%4+1}} -->
+									<div class="circle" :style="{display:(pos==1?'flex':'none'),backgroundColor:i.color}"></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		let vue = new Vue({
+			el: '.content',
+			data: {
+				dataPackage: parent.window.vue.dataPackage,
+				guid: parent.window.vue.guids,
+				pos: -1,
+				titleName:['卡片A','卡片B','卡片C']
+			},
+			computed: {
+				getRandomTest: function() {
+					if (this.dataPackage) {
+						if (this.dataPackage.RandomTest)
+							return this.dataPackage.RandomTest;
+						else
+							return null
+						console.log(this.dataPackage)
+					} else return null
+				},
+				getColor: function() {
+					if (this.dataPackage) {
+						if (this.dataPackage.setColor)
+							return this.dataPackage.setColor;
+						else return null
+						console.log(this.dataPackage.setColor)
+					} else return null
+				},
+
+			},
+			watch: {
+				dataPackage: {
+					handler(a, b) {
+						
+						console.log('vue-dataPac', this.dataPackage)
+					},
+					deep: true,
+					immediate: true
+				},
+				fast: {
+					handler(a, bo) {
+						console.log('vue-fast', this.fast)
+					},
+					deep: true,
+					immediate: false
+				}
+			}
+		})
+		Object.defineProperty(parent.window.vue, "dataPackage", {
+			get() {
+
+			},
+			set(e) {
+				console.log('datapack设置', e)
+				console.log(parent.window.vue.guids)
+				
+				vue.dataPackage = e;
+			}
+		})
+
+	
+		Object.defineProperty(parent.window.vue,"guids",{
+			get() {
+			
+			},
+			set(e) {
+				console.log('guid-Obj', e)
+				vue.guid = e;
+				if(vue.pos<2)
+					vue.pos++;
+			}
+		})
+	</script>
+</html>

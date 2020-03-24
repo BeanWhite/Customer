@@ -1,0 +1,525 @@
+<link rel="stylesheet" type="text/css" href="../css/user.css" />
+<script type="text/javascript" src="../js/config.js"></script>
+<script type="text/javascript" src="../js/vue.min.js"></script>
+<!-- 引入jQuery.js -->
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<!-- </div> -->
+<div id="getW" style="width: 100%;height: 100%;position: absolute;z-index:9 ;"></div>
+
+<!-- 画板 -->
+<div class="canvas-box">
+
+	
+	<div class="canvas-box-title">
+		<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:{{连线测验}</span>
+		<span style="color:rgb(214, 9, 9);font-family: SourceHanSansSC ;" onclick="home()">完成</span>
+	</div>
+	<div class="canvas-box-tools">
+		<div class="tools">
+			工具栏
+		</div>
+		<ul class="tools-box">
+			<li class="tools-items"  onclick="pen1()">
+				<img src="../svg/pen_gray.svg" id="pen" alt="0"/>
+				<span>画笔</span>
+			</li>
+			<li class="tools-items" onclick="G_eraser()">
+				<img src="../svg/eraser_gray.svg"  id="eraser" alt="0"/>
+				<span>橡皮擦</span>
+			</li>
+			<li class="tools-items" id="retreat" onclick="retreat()">
+				<img src="../svg/retreat.svg" />
+				<span>撤回</span>
+			</li>
+			<li class="tools-items" id="clear" onclick="clear_canvas()">
+				<img src="../svg/clear.svg" />
+				<span>重画</span>
+			</li>
+		</ul>
+		
+	</div>
+	<span style="position: fixed;top: 70px; z-index: 11; margin-left: 50%;">画板</span>
+	<canvas id="myCanvas"></canvas>
+	<!-- <input type="" name="" id="inp" value="" style="position: fixed;top: 50px;left: 200px;z-index: 200;" /> -->
+</div>
+
+<!-- <button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button> -->
+<script> 
+let USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+//let USER_ID = 222;
+let DOC_ID = 22;
+function ppp(){
+	location.reload(true)
+}
+function home(){
+	// let obj  = {
+	// 	target:parent.window.vue.docId,
+	// 	status:201,
+	// 	from_who:USER_ID,
+	// 	data:Cpath
+	// };
+	// parent.window.vue.scale_R['20'] = obj;
+	// console.log(parent.window.vue)
+}
+</script>
+
+
+<script>
+	/**
+	 * ！！！！要设置为在画布中有记录之后才能发送消息！！！！
+	 */
+	//var inp = document.getElementById('inp');
+	var eraser = document.getElementById('eraser');
+	var pencile = document.getElementById('pen');
+	var getW = document.getElementById('getW');
+	var bot = document.getElementById('myCanvas'); //画布div
+	bot.height = window.screen.height;
+	bot.width = window.screen.width;
+	var ttt = document.getElementById('draw-tools');
+	var myCanvas = document.getElementById('myCanvas', 1); //创建画布
+	var x, y, x1, y1; //记录坐标
+	var isIn = false;	//判断线条是否进入圆的范围内，默认没有		
+	
+	//画板左上角像素坐标（px）
+	var Lx = (getW.offsetWidth - bot.offsetWidth) / 2,
+		Ly = (getW.offsetHeight - bot.offsetHeight) / 2 + 30;
+	var flag = 0;
+	var context = myCanvas.getContext('2d'); //获取上下文
+	var isMouseDown = false; 		//判断鼠标是否按下，默认没有
+	var isMove = false; 			//判断有没有移动
+	var dataURL; 					//画图内容
+	var imgStack = []; 				//图像栈
+	var strokesStack =[];			//笔画栈
+	var ss = [];					//笔画栈暂缓区
+	var isPen = false;				//定义画笔是否生效，默认禁止
+	var isEraser = false;			//定义橡皮是否生效，默认禁止，橡皮和画笔只能同时生效一个，可以两个都禁止
+	var flag_img = 0;
+	var pen_color = 'black';
+	var pen_width = 2;
+	let dt=null; 	//send计时器
+	var C = $.ajax({
+		url:'../JSON/circle.json',
+		async:false
+	}).responseJSON;				//从JSON获取圆配置信息
+	console.log(C);
+	var status =4;					//当前圆状态，用于选择哪一种图
+	const R = 15;					//圆的半径
+	var Circle;						//当前圆
+	var CP = {}						//存储已经画好的圆在画板中的位置
+	var Cpath = [];					//存储用户画的路线(圆的值)
+	var ratioX = bot.width / bot.offsetWidth, //比例(画板大小/px像素)
+		ratioY = bot.height / bot.offsetHeight;
+	
+	var cX =  (bot.width - 150) / (bot.offsetWidth),	//工具栏的宽度设置为100px,所以减去100，多一点防止压线
+		cY = ( bot.height-200) / bot.offsetHeight,
+		rowX = 100 * ratioX;		//最后圆还需要在画板中平移的距离
+	window.onload = function() {
+		bot.ontouchstart = mouseDownAction;
+		bot.ontouchmove = mouseMoveAction;
+		bot.ontouchend = mouseUpAction;
+	}
+	$(document).ready(function(){
+		init_canvas();
+		dataURL = myCanvas.toDataURL();
+		imgStack.push({
+			dataURL:dataURL,
+			path:[]
+		})	
+	})
+	
+	/**
+	 * 撤回
+	 */
+	function cancle_pen() {
+		if (dataURL == imgStack[imgStack.length - 1].dataURL){
+			imgStack.pop()
+		}
+		console.log(imgStack)
+		dataURL = imgStack[imgStack.length - 1].dataURL;
+		Cpath = imgStack[imgStack.length - 1].path.slice(0);
+		bot.height = bot.height;
+		let img = new Image();
+		img.src = dataURL;
+		img.addEventListener('load', () => {
+			sendMSG();
+			context.drawImage(img, 0, 0)
+		})
+	}
+	
+	/**
+	 * 清空画板内容
+	 */
+	function clear_canvas(){
+		bot.height = bot.height;
+		//当前设计清空不能回退
+		ss = [];
+		strokesStack = [];
+		dataURL = myCanvas.toDataURL();
+		
+		imgStack.push({
+			dataURL:dataURL,
+			path:Cpath.slice(0)
+		});
+		sendMSG(dataURL);
+		init_canvas()
+		
+	}
+	
+	/**
+	 * 使用橡皮檫
+	 */
+	function G_eraser(){
+	
+		if(eraser.alt == 0){//打开橡皮
+			if(isPen){
+					pencile.src = '../svg/pen_gray.svg';
+					pencile.alt=0;
+					isPen = false;
+			}
+			eraser.src = '../svg/eraser.svg';
+			eraser.alt=1;
+			isEraser = true;
+			pen_color = 'white';
+			pen_width = 40;
+		}else{
+			eraser.src = '../svg/eraser_gray.svg';
+			eraser.alt=0;
+			isEraser = false;
+		}
+		
+	}
+	/**
+	 * 画笔处于激活状态可以绘画
+	 */
+	function pen1(){	
+		
+		if(pencile.alt == 0){//打开画笔
+			if(isEraser){
+				eraser.src = '../svg/eraser_gray.svg';
+				eraser.alt=0;
+				isEraser = false;
+			}
+			pencile.src = '../svg/pen.svg';
+			pencile.alt=1;
+			isPen = true;
+			pen_color = 'black';
+			pen_width = 2;
+	
+		}else{
+			pencile.src = '../svg/pen_gray.svg';
+			pencile.alt=0;
+			isPen = false;
+		}
+		
+	}
+	
+	/**
+	 * 返回到上一笔
+	 */
+	function retreat(){
+		if(imgStack.length<2)
+		return
+		//console.log(imgStack,'a')
+		//if (dataURL == imgStack[imgStack.length - 1].dataURL)
+			imgStack.pop()
+			//console.log(imgStack,'b')
+		dataURL = imgStack[imgStack.length - 1].dataURL;
+		Cpath = imgStack[imgStack.length - 1].path.slice();
+		bot.height = bot.height;
+		let img = new Image();
+		img.src = dataURL;
+		img.addEventListener('load', () => {
+			sendMSG(dataURL);
+			context.drawImage(img, 0, 0)
+		})
+
+	}
+	
+	/**
+	 * @param {Object} e初始化面板
+	 */
+	function init_canvas(){
+		CP = {};		//清空之前的数据
+		Cpath =[];
+		if (status == 1)
+			Circle = C.Circle_1;
+		else if (status == 2)
+			Circle = C.Circle_2;
+		else if (status == 3)
+			Circle = C.Circle_3;
+		else
+			Circle = C.Circle_4;
+		for (i in Circle) {
+			context.beginPath();
+			context.strokeStyle = '#000000';
+			context.lineWidth = 2;
+			context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+			context.font = "20px Arial";
+			//添加文字
+			if (parseInt(Circle[i].value) > 9)
+				context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R * 0.8, Circle[i].y * cY + R / 2);
+			else
+				context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R / 2, Circle[i].y * cY + R / 2);
+			if (Circle[i].mark)
+				context.fillText(Circle[i].mark, Circle[i].x * cX + rowX - R * 1.5 , Circle[i].y * cY - R *1.5)
+			
+			let o = {
+				x:Circle[i].x * cX + rowX,
+				y:Circle[i].y * cY,
+				r:R
+			}
+			CP[Circle[i].value] = o;
+ 			context.stroke()
+		}
+		console.log(CP)
+	}
+	
+	/**
+	 * 鼠标按下
+	 */
+	function mouseDownAction(e) {
+		
+		if(isPen == false&&isEraser==false)
+		return
+
+		
+		isMouseDown = true;
+
+		x = (e.touches[0].pageX - Lx) * ratioX;
+		y = (e.touches[0].pageY - Ly) * ratioY;
+		if (e && e.stopPropagation)
+			//因此它支持W3C的stopPropagation()方法 
+			e.stopPropagation();
+		else
+			//否则，我们需要使用IE的方式来取消事件冒泡 
+			window.event.cancelBubble = true;
+	}
+	/**
+	 * @param {Object} e获取触摸位置到圆心的距离
+	 */
+	
+	function getDistance(x1,y1){
+		let d = "" ;
+		for(i in CP){
+		let x=CP[i].x;
+		let y = CP[i].y;
+		if(Math.sqrt((x1-x)*(x1-x) + (y1-y) * (y1-y))<= CP[i].r+1)
+			d = i;
+		
+		}
+		return d;
+	}
+	
+	/**
+	 * 鼠标开始移动
+	 */
+	function mouseMoveAction(e) {
+		if(isPen == false&& isEraser == false)
+		return
+		if (isMouseDown) {
+			
+			if(dt==null){
+				dt = setInterval(function(){
+				sendMSG(myCanvas.toDataURL())
+			},400)
+			}
+			// x1 = e.offsetX;
+
+			// y1 = e.offsetY;
+			x1 = (e.touches[0].pageX - Lx) * ratioX;
+			y1 = (e.touches[0].pageY - Ly) * ratioY;
+			let d = getDistance(x1,y1);
+			if(d!=""){
+				//inp.value = d;
+				if(Cpath.length>0){
+					if(d!=Cpath[Cpath.length-1]){
+						if(Cpath.indexOf(d)<0){
+							Cpath.push(d)
+						}
+					}
+				}else{
+					Cpath.push(d);
+				}
+			}
+			drowLine(x, y, x1, y1);
+			flag++;
+			if (flag == 10000)
+				flag = 1;
+			if (e && e.stopPropagation)
+				//因此它支持W3C的stopPropagation()方法 
+				e.stopPropagation();
+			else
+				//否则，我们需要使用IE的方式来取消事件冒泡 
+				window.event.cancelBubble = true;
+		}
+	}
+	/**
+	 * 鼠标弹起来
+	 */
+	function mouseUpAction(e) {
+		if(dt!=null){
+			clearInterval(dt);
+			dt = null;
+		}
+		if(isPen == false && isEraser ==false)
+		return
+		if(ss.length>0){
+			strokesStack.push(ss);
+			ss = []
+		}
+		
+		isMouseDown = false;
+		flag = 0;
+		if (isMove) {
+			dataURL = myCanvas.toDataURL();
+			imgStack.push({
+				dataURL:dataURL,
+				path:Cpath.slice(0)
+				
+			});
+			isMove = false;
+			sendMSG(dataURL)
+		}
+		if (e && e.stopPropagation)
+			//因此它支持W3C的stopPropagation()方法 
+			e.stopPropagation();
+		else
+			//否则，我们需要使用IE的方式来取消事件冒泡 
+			window.event.cancelBubble = true;
+		
+		//console.log(imgStack)
+	}
+	/**
+	 * 画线
+	 */
+	function drowLine(X, Y, X1, Y1) {
+		//开启新的路径
+		let arrPath =[];
+		if (flag) {
+			context.beginPath();
+			if (X != X1 && Y != Y1) {
+				isMove = true;
+			}
+			context.lineWidth = pen_width; //线条粗细
+			context.strokeStyle = pen_color; //线条颜色
+			context.moveTo(X, Y); //画笔起点坐标
+			context.lineTo(X1, Y1); //画笔终点坐标
+			context.stroke(); //绘制
+			context.strokeStyle = pen_color; //线条颜色
+		}
+		
+		if(flag){
+			arrPath = [X,Y,X1,Y1];
+			ss.push(arrPath);
+		}
+		if (flag != 0) {
+			x = x1;
+			y = y1;
+		}
+	}
+	/**
+	 * websocket连接
+	 */
+	function hasMessage(e) {
+		let p = e.data;
+		let data = e;
+		
+		
+		if (data.ot == 0) {
+			status = data.data;
+			bot.height = bot.height;
+			imgStack.splice(0, imgStack.length);
+			init_canvas();
+			//dataURL = myCanvas.toDataURL("image/webp");
+			imgStack.push({
+				dataURL:dataURL,
+				path:Cpath.slice(0)
+			});
+			sendMSG();
+		
+		} else if (data.ot == 1) {
+			if (status == 1)
+				Circle = C.Circle_1;
+			else if (status == 2)
+				Circle = C.Circle_2;
+			else if (status == 3)
+				Circle = C.Circle_3;
+			else
+				Circle = C.Circle_4;
+			console.log('%%%%%%%%')
+			for (i in Circle) {
+				if (Circle[i].value == p) {
+					context.font = "20px Arial";
+					//添加文字
+					if (parseInt(Circle[i].value) > 9)
+						context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R * 0.8, Circle[i].y * cY + R / 2);
+					else
+						context.fillText(Circle[i].value, Circle[i].x * cX + rowX - R / 2, Circle[i].y * cY + R / 2);
+					if (Circle[i].mark)
+						context.fillText(Circle[i].mark, Circle[i].x * cX + rowX - R * 1.5 , Circle[i].y * cY - R *1.5)
+		
+					context.beginPath(); 
+					context.strokeStyle = '#ff0000';
+					context.lineWidth = 2;
+					context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+					context.stroke();
+					setTimeout(function() {
+						context.beginPath();
+						context.strokeStyle = '#000000';
+						context.lineWidth = 2;
+						context.arc(Circle[i].x * cX + rowX, Circle[i].y * cY, R, 0, 2 * Math.PI);	//画圆
+						context.stroke()
+					}, 1000);
+					break;
+				}
+			}
+			
+		}
+		console.log("有消息推送", data, '***');
+	}
+
+
+
+	function sendMSG(str) {
+		/**
+		 * 使用undertow作为容器不需要截断处理
+		 */
+		let o = {
+			target:parent.window.vue.docId,
+			data:str,
+			ot:Cpath
+		}
+		parent.window.sendMsg(o)
+		//websocket.send(JSON.stringify(o))
+		//发送消息是截断处理
+		//var str = da + '';
+		// var strArr = [];
+		// //消息发送目标用户
+		// //var targetUsers = ['123'];
+		// if (str.length > 7000) {
+		// 	for (let i = 0, index = 0; i < str.length; index++, i += 7000) {
+		// 		strArr[index] = str.slice(i, i + 7000);
+		// 	}
+		// } else {
+		// 	strArr[0] = str;
+		// }
+		// for (let i = 0; i < strArr.length; i++) {
+		// 	let obj = {};
+		// 	obj.target = 22;
+		// 	obj.data = strArr[i];
+		// 	obj.incise = true;
+		// 	if (i == strArr.length - 1)
+		// 		obj.endIncise = true;
+		// 	websocket.send(JSON.stringify(obj));
+		// }
+	}
+	
+	Object.defineProperty(parent.window.vue,"noStatus",{
+		get(){
+			
+		},set(e){
+			console.log('接收无状态消息',e)
+			hasMessage(e);
+		}
+	})
+</script>

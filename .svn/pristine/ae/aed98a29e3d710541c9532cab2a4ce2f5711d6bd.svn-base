@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<link rel="stylesheet" type="text/css" href="../css/init.css" />
+		<link rel="stylesheet" type="text/css" href="../css/user.css" />
+		<script type="text/javascript" src="../js/config.js"></script>
+		<!-- 引入jQuery.js -->
+		<script type="text/javascript" src="../js/jquery.min.js"></script>
+	</head>
+	<body>
+		<!-- </div> -->
+		<div id="getW" style="width: 100%;height: 100%;position: absolute;z-index:9 ;"></div>
+
+		<!-- 画板 -->
+		<div class="canvas-box">
+			<div class="canvas-box-title">
+				<span style="color: rgb(16, 112, 193);font-family: SourceHanSansSC;">量表名称:画钟测验</span>
+			</div>
+			
+			<div class="canvas-box-tools">
+				<div class="tools">
+					工具栏
+				</div>
+				<ul class="tools-box">
+					<li class="tools-items"  onclick="pen()">
+						<img src="../svg/pen_gray.svg" id="pen" alt="0"/>
+						<span>画笔</span>
+					</li>
+					<li class="tools-items" onclick="G_eraser()">
+						<img src="../svg/eraser_gray.svg"  id="eraser" alt="0"/>
+						<span>橡皮擦</span>
+					</li>
+					<li class="tools-items" id="retreat" onclick="retreat()">
+						<img src="../svg/retreat.svg" />
+						<span>撤回</span>
+					</li>
+					<li class="tools-items" id="clear" onclick="clear_canvas()">
+						<img src="../svg/clear.svg" />
+						<span>重画</span>
+					</li>
+				</ul>
+			</div>
+			
+			<div class="ex-img off">
+				<div class="ex-img-title">示例：</div>
+				<img class="ex-img-value"  />
+			</div>
+			
+			<span style="display: inline-block; position: fixed;top: 70px;width: 100%; text-align: center; z-index: 11;">画板</span>
+			
+			<canvas id="myCanvas"></canvas>
+		</div>
+	
+		<!-- <button type="button" style="position: fixed;bottom: 20px;z-index: 100;" onclick="ppp()">刷新 </button> -->
+	</body>
+	<script>
+		function ppp(){
+			location.reload(true)
+		}
+		/**
+		 * 获取例图节点
+		 */
+		let ii = document.getElementsByClassName('ex-img')[0];
+		let ew = document.getElementsByClassName('ex-img-value')[0];
+		let ItemPage = {
+			isSession:true, //定义是否为独立页面，默认是
+			showPic:false	,//定义是否展示图片,默认否
+			picUrl:["../images/oval.png","../images/cross.png","../images/rhombus.png","../images/cube.png"]
+		}
+		$(document).ready(function(){
+			if(parent.window.vue){
+				if(parent.window.vue.pac_4){
+					ItemPage.isSession = false;
+					ItemPage.showPic = true;
+					ii.style.zIndex = "20";
+					ew.src =ItemPage.picUrl[0]
+				}else{
+					websocket = new WebSocket(config.wsURL + '/websocket/' + '*****')
+				}
+				
+				
+			}
+			
+				if(websocket){
+					websocket.binaryType = "arraybuffer"
+					websocket.onopen = function(e) {
+					console.log('建立连接')
+					//websocket.binaryType = 'arraybuffer'	//传送arraybuffer字符串
+					}
+					websocket.onclose = function(e) {
+					
+						console.log('连接关闭')
+					}
+					websocket.onmessage = function(e) {
+					
+						console.log("有消息推送", e.data, '***');
+					}
+					websocket.onerror = function() {
+						console.log('建立连接出错')
+						alert('连接出错1')
+					}
+					//窗口关闭
+					window.onbeforeunload = function() {
+						websocket.close();
+					}
+					
+				}
+			
+				
+		})	
+		/**
+		 * 要设置为在画布中有记录之后才能发送消息
+		 */
+		var eraser = document.getElementById('eraser');
+		var pencile = document.getElementById('pen');
+		var getW = document.getElementById('getW');
+		var bot = document.getElementById('myCanvas'); //画布div
+		bot.height = window.screen.height;
+		bot.width = window.screen.width;
+		var ttt = document.getElementById('draw-tools');
+		var myCanvas = document.getElementById('myCanvas', 1); //创建画布
+		var x, y, x1, y1; //记录坐标
+		
+		//画板左上角像素坐标（px）
+		var Lx = (getW.offsetWidth - bot.offsetWidth) / 2,
+			Ly = (getW.offsetHeight - bot.offsetHeight) / 2 + 30;
+		var flag = 0;
+		var context = myCanvas.getContext('2d'); //获取上下文
+		var isMouseDown = false; 		//判断鼠标是否按下，默认没有
+		var isMove = false; 			//判断有没有移动
+		var dataURL; 					//画图内容
+		var imgStack = []; 				//图像栈
+		var strokesStack =[];			//笔画栈
+		var ss = [];					//笔画栈暂缓区
+		var isPen = false;				//定义画笔是否生效，默认禁止
+		var isEraser = false;			//定义橡皮是否生效，默认禁止，橡皮和画笔只能同时生效一个，可以两个都禁止
+		var flag_img = 0;
+		var pen_color = 'black';
+		var pen_width = 2;
+		let dt; 
+		
+		var ratioX = bot.width / bot.offsetWidth, //比例
+			ratioY = bot.height / bot.offsetHeight;
+			window.onload = function() {
+			bot.ontouchstart = mouseDownAction;
+			bot.ontouchmove = mouseMoveAction;
+			bot.ontouchend = mouseUpAction;
+		}
+		
+		/**
+		 * 撤回
+		 */
+		function cancle_pen() {
+			if (dataURL == imgStack[imgStack.length - 1])
+				imgStack.pop()
+			dataURL = imgStack[imgStack.length - 1];
+			bot.height = bot.height;
+			let img = new Image();
+			img.src = dataURL;
+			img.addEventListener('load', () => {
+				sendMSG();
+				context.drawImage(img, 0, 0)
+			})
+		}
+		
+		// /**
+		//  * 点击完成
+		//  */
+		
+		// function sub(){
+		// 	eraser.src = '../svg/eraser_gray.svg';
+		// 	eraser.alt=0;
+		// 	isEraser = false;
+		// 	pencile.src = '../svg/pen_gray.svg';
+		// 	pencile.alt=0;
+		// 	isPen = false;
+		// }
+		
+		/**
+		 * 清空画板内容
+		 */
+		function clear_canvas(){
+			bot.height = bot.height;
+			//当前设计清空不能回退
+			ss = [];
+			strokesStack = [];
+			dataURL = myCanvas.toDataURL();
+			imgStack.push(dataURL);
+			sendMSG(dataURL);
+			
+		}
+		
+		/**
+		 * 使用橡皮檫
+		 */
+		function G_eraser(){
+			if(eraser.alt == 0){//打开橡皮
+				if(isPen){
+						pencile.src = '../svg/pen_gray.svg';
+						pencile.alt=0;
+						isPen = false;
+				}
+				eraser.src = '../svg/eraser.svg';
+				eraser.alt=1;
+				isEraser = true;
+				pen_color = 'white';
+				pen_width = 40;
+			}else{
+				eraser.src = '../svg/eraser_gray.svg';
+				eraser.alt=0;
+				isEraser = false;
+			}
+			
+		}
+		/**
+		 * 画笔处于激活状态可以绘画
+		 */
+		function pen(){
+			if(pencile.alt == 0){//打开画笔
+				if(isEraser){
+					eraser.src = '../svg/eraser_gray.svg';
+					eraser.alt=0;
+					isEraser = false;
+				}
+				pencile.src = '../svg/pen.svg';
+				pencile.alt=1;
+				isPen = true;
+				pen_color = 'black';
+				pen_width = 2;
+			}else{
+				pencile.src = '../svg/pen_gray.svg';
+				pencile.alt=0;
+				isPen = false;
+			}
+		}
+		
+		/**
+		 * 返回到上一笔
+		 */
+		function retreat(){
+			if(imgStack.length<1)
+			return
+			if (dataURL == imgStack[imgStack.length - 1])
+				imgStack.pop()
+			dataURL = imgStack[imgStack.length - 1];
+			bot.height = bot.height;
+			let img = new Image();
+			img.src = dataURL;
+			img.addEventListener('load', () => {
+				sendMSG(dataURL);
+				context.drawImage(img, 0, 0)
+			})
+			
+			// if(strokesStack.length<1){
+			// 	return
+			// }
+			// let arr = strokesStack.pop();
+			// var c=document.getElementById("myCanvas");
+			// var ctx=c.getContext("2d");
+			// ctx.beginPath()
+			// context.lineWidth = 4; //线条粗细
+			// context.strokeStyle = 'white'; //线条颜色
+			// ctx.fillStyle="white";
+			// for(let j=0;j<1;j++){//循环2次，防止一次擦不干净
+			// 	for(let i=0;i<arr.length;i++){
+			// 		 ctx.moveTo(arr[i][0],arr[i][1]);
+			// 		 ctx.lineTo(arr[i][2],arr[i][3]);
+			// 		ctx.stroke();
+			// 	}
+			// }	
+			//sendMSG(myCanvas.toDataURL());
+		}
+		/**
+		 * 鼠标按下
+		 */
+		function mouseDownAction(e) {
+			if(isPen == false&&isEraser==false)
+			return
+		// dt = setInterval(()=> {
+		// 			if (websocket.readyState == 1&&isMouseDown) {
+		// 				sendMSG(myCanvas.toDataURL('image/webp',0.1))
+		// 			}
+		// 			//if(isMouseDown==false)
+		// 			//clearInterval(dt)
+		// 		}, 1000)
+			
+			isMouseDown = true;
+			// console.log("client:" + e.touches[0].clientX + "||" + e.touches[0].clientY);
+			// console.log("page:" + e.touches[0].pageX + "||" + e.touches[0].pageY);
+			// console.log("screen:" + e.touches[0].screenX + "||" + e.touches[0].screenY);
+			// console.log(window.screen.width + "==" + window.screen.height)
+			x = (e.touches[0].pageX - Lx) * ratioX;
+			y = (e.touches[0].pageY - Ly) * ratioY;
+			if (e && e.stopPropagation)
+				//因此它支持W3C的stopPropagation()方法 
+				e.stopPropagation();
+			else
+				//否则，我们需要使用IE的方式来取消事件冒泡 
+				window.event.cancelBubble = true;
+		}
+		/**
+		 * 鼠标开始移动
+		 */
+		function mouseMoveAction(e) {
+			
+			if(isPen == false&& isEraser == false)
+			return
+			if (isMouseDown) {
+				// x1 = e.offsetX;
+	
+				// y1 = e.offsetY;
+				x1 = (e.touches[0].pageX - Lx) * ratioX;
+				y1 = (e.touches[0].pageY - Ly) * ratioY;
+				drowLine(x, y, x1, y1);
+				flag++;
+				if (flag == 10000)
+					flag = 1;
+				if (e && e.stopPropagation)
+					//因此它支持W3C的stopPropagation()方法 
+					e.stopPropagation();
+				else
+					//否则，我们需要使用IE的方式来取消事件冒泡 
+					window.event.cancelBubble = true;
+			}
+		}
+		/**
+		 * 鼠标弹起来
+		 */
+		function mouseUpAction(e) {
+			if(isPen == false && isEraser ==false)
+			return
+			if(ss.length>0){
+				strokesStack.push(ss);
+				ss = []
+			}
+			
+			
+			//clearInterval(dt)
+			isMouseDown = false;
+			flag = 0;
+			if (isMove) {
+				dataURL = myCanvas.toDataURL();
+				imgStack.push(dataURL);
+				isMove = false;
+				sendMSG(dataURL)
+				//dataURL = myCanvas.toDataURL('image/webp');
+				//sendMSG(dataURL);
+	
+			}
+			if (e && e.stopPropagation)
+				//因此它支持W3C的stopPropagation()方法 
+				e.stopPropagation();
+			else
+				//否则，我们需要使用IE的方式来取消事件冒泡 
+				window.event.cancelBubble = true;
+		}
+		/**
+		 * 画线
+		 */
+		function drowLine(X, Y, X1, Y1) {
+			//开启新的路径
+			let arrPath =[];
+			if (flag) {
+				context.beginPath();
+				if (X != X1 && Y != Y1) {
+					isMove = true;
+				}
+				context.lineWidth = pen_width; //线条粗细
+				context.strokeStyle = pen_color; //线条颜色
+				context.moveTo(X, Y); //画笔起点坐标
+				context.lineTo(X1, Y1); //画笔终点坐标
+				context.stroke(); //绘制
+				context.strokeStyle = pen_color; //线条颜色
+			}
+			
+			if(flag){
+				arrPath = [X,Y,X1,Y1];
+				ss.push(arrPath);
+			}
+			if (flag != 0) {
+				x = x1;
+				y = y1;
+			}
+		}
+		/**
+		 * websocket连接
+		 */
+		var websocket = null;
+		
+		
+		function sendMSG(str) {
+			console.log(ItemPage)
+			if(ItemPage.isSession==true){
+				//发送消息是截断处理
+				//var str = da + '';
+				var strArr = [];
+				//消息发送目标用户
+				//var targetUsers = ['123'];
+				if (str.length > 7000) {
+					for (let i = 0, index = 0; i < str.length; index++, i += 7000) {
+						strArr[index] = str.slice(i, i + 7000);
+					}
+				} else {
+					strArr[0] = str;
+				}
+				for (let i = 0; i < strArr.length; i++) {
+					let obj = {};
+					obj.target = 22;
+					obj.data = strArr[i];
+					obj.incise = true;
+					if (i == strArr.length - 1)
+						obj.endIncise = true;
+						websocket.send(JSON.stringify(obj));
+				}
+			}else{
+				let o = {
+					target:parent.parent.window.vue.docId,
+					data:str,
+					status:1,
+					dataOptions:4
+				}
+				parent.window.vue.sendMsg(o);
+			}
+			
+		}
+		
+	
+		let arr = [];//
+		if(parent.window.vue){
+			if(parent.window.vue.pac_4){
+				document.getElementsByClassName('canvas-box-title')[0].style.display = 'none'
+				document.getElementsByClassName('ex-img')[0].style.position = 'absolute'
+				document.getElementsByClassName('ex-img')[0].style.display = 'flex'
+				ItemPage.isSession = false;//设为非独立页面
+				Object.defineProperty(parent.window.vue.pac_4,"f",{
+					get(){
+						
+					},
+					set(e){
+							ew.src = ItemPage.picUrl[e[0]]
+							if(arr.indexOf(e[0])<0){
+								arr.push(e[0]);
+								clear_canvas();
+						}
+					}
+				})
+			}
+		}
+		
+	</script>
+</html>
