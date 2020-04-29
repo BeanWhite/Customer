@@ -27,7 +27,7 @@
 				</div>
 				<ul class="tools-box">
 					<li class="tools-items"  onclick="pen()">
-						<img src="../svg/pen.svg" id="pen" alt="1"/>
+						<img src="../svg/pen_gray.svg" id="pen" alt="0"/>
 						<span>画笔</span>
 					</li>
 					<li class="tools-items" onclick="G_eraser()">
@@ -136,7 +136,7 @@
 		var isEraser = false;			//定义橡皮是否生效，默认禁止，橡皮和画笔只能同时生效一个，可以两个都禁止
 		var flag_img = 0;
 		var pen_color = 'black';
-		var pen_width = 3;
+		var pen_width = 2;
 		let dt; 
 		
 		var ratioX = bot.width / bot.offsetWidth, //比例
@@ -226,7 +226,7 @@
 				pencile.alt=1;
 				isPen = true;
 				pen_color = 'black';
-				pen_width = 3;
+				pen_width = 2;
 			}else{
 				pencile.src = '../svg/pen_gray.svg';
 				pencile.alt=0;
@@ -405,7 +405,7 @@
 				}
 				for (let i = 0; i < strArr.length; i++) {
 					let obj = {};
-					obj.target = parent.window.vue.docId;
+					obj.target = 22;
 					obj.data = strArr[i];
 					obj.incise = true;
 					if (i == strArr.length - 1)

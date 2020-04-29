@@ -12,8 +12,8 @@
 		<title>神经心理辅助诊疗系统</title>
 	</head>
 	<body>
-		<div class="content" style="overflow: hidden;">
-			<object v-if="testNo==4" :style="{display:(testNo==4?'initial':'none')}" data="user_clock.html" class="off Ifram" style="overflow: hidden;"></object>
+		<div class="content">
+			<object v-if="testNo==4" :style="{display:(testNo==4?'initial':'none')}" data="user_clock.html" class="off Ifram"></object>
 			<div class="page-content" v-else>
 				<div class="page-content-title">
 					<span class="title-blue">量表名称：{{titile}}</span>
@@ -26,7 +26,7 @@
 					<div class="mainMargin">
 						<div class="mainMargin-content stay-center">
 							<span v-if="testNo==1" class="font-large" style="color: #1070C1;">{{timerEnd?"":getFastData}}</span>
-							<img v-else-if="testNo==2" :src="getFastData.length>30?getFastData:'../images/space.png'" style="height: 60%;">
+							<img v-else-if="testNo==2" :src="getFastData" style="height: 60%;">
 							<span v-else-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
 							<div class="full" v-else-if="testNo==7">
 								<div v-if="ind_7==0" class="flex-colum-space-evenly full">
@@ -56,9 +56,8 @@
 									</li>
 								</ul>
 							</div>
-							<span v-else style="display: flex;flex-direction: column;justify-content: center;align-items: center;">
-								<img src="../images/svg/icon1.svg" />
-								<span style="color:rgb(16, 112, 193) ;font-size: 30px;margin-top: 20px;">请准备，马上开始答题</span>
+							<span v-else>
+								本评估暂无需您操作，请认真听医生的问题
 							</span>
 						</div>
 
@@ -66,7 +65,8 @@
 				</div>
 			</div>
 		</div>
-		<!-- <button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;">刷新</button> -->
+
+		<button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;">刷新</button>
 		<script>
 			function a() {
 				location.reload(true)

@@ -36,19 +36,10 @@
 			<div id="history" v-on:click="getHistory()">
 				历史报告
 			</div>
-			<object class="menue-obj"  :data="webs[pos]" id="html-box" :style="styles.pageZindex" v-if="webs.length>0 && isReady "></object>
+			<object class="menue-obj" :data="webs[pos]" id="html-box" :style="styles.pageZindex" v-if="webs.length>0 && isReady "></object>
 			<!-- <object class="menue-obj" :data="Npage[1]" id="html-box" :style="styles.pageZindex"></object> -->
-			<div class="menue-icons-list">
-				<div class="menue-icons" @click="quit()" style="background-color: firebrick;">
-					<img src="../svg/menue_icons/shutDown.svg" >
-				</div>
-				<div class="menue-icons" @click="home()">
-					<img src="../svg/menue_icons/home.svg" >
-				</div>
-			</div>
 		</div>
 		<!-- <button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;z-index: 1000;">刷新</button> -->
-		
 		<script>
 			function a() {
 				location.reload(true)
@@ -67,10 +58,11 @@
 		var vue = new Vue({
 			el: '.vue',
 			data() {
+
 				return {
 					a: '',
 					b: '',
-					docId: '', //默认为空字符串
+					docId: "22", //默认为空字符串
 					pages: null,
 					fastData: [], //子页面需要的即时数据
 					itemPackage: [], //子页面数据包
@@ -100,7 +92,6 @@
 					webs: [], //网页url
 					noStatus: null, //websocket接收的没有状态属性的数据
 					isReady: false, //为true才打开子窗口
-					websocket:null,
 				}
 
 			},
@@ -132,13 +123,6 @@
 				}
 			},
 			methods: {
-				home(){
-					Object.assign(vue.$data,vue.$options.data())
-				},
-				quit(){
-					sessionStorage.removeItem('user');
-					location.href = '../login.html'
-				},
 				initMsg(){
 					/**
 					 * 有消息来时是初始化
@@ -229,98 +213,90 @@
 				}
 			}
 		});
-		let ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
-		function rcon(){
-			ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
-		}
-		if(ws){
-			ws.onopen = function(e) {
-				console.log('连接')
-			};
-			ws.onclose = function() {
-				//alert('关闭')
-				ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID)
-				console.log('关闭')
-			};
-			ws.onerror = function() {
-				//alert('出错')
-				ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID)
-				console.log('出错')
-			};
-			ws.onmessage = function(e) {
-				/**
-				 * status 说明
-				 * status = 1 ,子页面需要的即时数据
-				 * status = 2 ，接收数据为图片
-				 * status = 3 ，进入下一个量表
-				 * status = 4 , 初始值
-				 * status = 5 ，接受量表信息，ID号和名字
-				 * status = 6 ，设置指导语
-				 * status = 0 ，子页面所需数据包
-				 * status = 7 , 进入下一题
-				 * status = 8 ， 当前题目内容修改
-				 */
-				let data = JSON.parse(e.data)
-				console.log('有消息', data)
-				console.log(vue, 'vue控制器')
-				if (data.status == 0) { //设置子页面需要的数据包
-					vue.dataPackage = data.data;
-					if (data.data.guid)
-						vue.guids = data.data.guid;
-				} else if (data.status == 1) { //设置即时数据
-					console.log(vue.fastData, '即时数据')
-					vue.fastData.splice(0);
-					vue.fastData.push(data.data)
-				} else if (data.status == 3) {
-					if (vue.pos + 1 >= vue.webs.length) {
-						console.log('跳转到结束页面')
-						vue.webs.splice(0)
-						location.href = 'finish.html'
-						return
-					}
-					vue.pos++;
-				} else if (data.status == 5) { //设置发布的量表信息
-					console.log(vue)
-					vue.init()
-					vue.docId = data.from_who;
-					
-					//医生发送过来的量表信息
-					vue.scaleMsg.splice(0);
-					for (let i = 0; i < data.data.length; i++) {
-						let obj = {};
-						obj.id = data.data[i].aiScaleId;
-						obj.name = data.data[i].aiScaleName;
-						/**
-						 * 设置页面所需url
-						 */
-						vue.webs.push(vue.pages[obj.id] + USER_ID);
-						vue.scaleMsg.push(obj); //量表信息
-						vue.scaleNumbers.push(obj.id); //量表顺序
-					}
-					vue.ststus.push(5)
-					vue.index = 0;
-			
-				} else if (data.status == 6) { //设置指导语
-					vue.guids = data.data;
-				} else if (data.status == 7) { //进入下一题
-					vue.itemPackage.splice(0);
-					vue.itemPackage.push(data.data)
-					console.log('接收数据包', vue.itemPackage);
-				} else if (data.status = -1) {
-					let a = JSON.stringify(data)
-					vue.noStatus = JSON.parse(a)
+		const ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
+		ws.onopen = function(e) {
+			console.log('连接')
+		};
+		ws.onclose = function() {
+			//alert('关闭')
+			ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID)
+			console.log('关闭')
+		};
+		ws.onerror = function() {
+			//alert('出错')
+			console.log('出错')
+		};
+		ws.onmessage = function(e) {
+			/**
+			 * status 说明
+			 * status = 1 ,子页面需要的即时数据
+			 * status = 2 ，接收数据为图片
+			 * status = 3 ，进入下一个量表
+			 * status = 4 , 初始值
+			 * status = 5 ，接受量表信息，ID号和名字
+			 * status = 6 ，设置指导语
+			 * status = 0 ，子页面所需数据包
+			 * status = 7 , 进入下一题
+			 * status = 8 ， 当前题目内容修改
+			 */
+			let data = JSON.parse(e.data)
+			console.log('有消息', data)
+			console.log(vue, 'vue控制器')
+			if (data.status == 0) { //设置子页面需要的数据包
+				vue.dataPackage = data.data;
+				if (data.data.guid)
+					vue.guids = data.data.guid;
+			} else if (data.status == 1) { //设置即时数据
+				console.log(vue.fastData, '即时数据')
+				vue.fastData.splice(0);
+				vue.fastData.push(data.data)
+			} else if (data.status == 3) {
+				if (vue.pos + 1 >= vue.webs.length) {
+					console.log('跳转到结束页面')
+					vue.webs.splice(0)
+					location.href = 'finish.html'
+					return
 				}
-			};
-			window.onbeforeunload = function() {
-				ws.close()
-				console.log('关闭')
+				vue.pos++;
+			} else if (data.status == 5) { //设置发布的量表信息
+				console.log(vue)
+				vue.init()
+				vue.docId = data.from_who;
+				
+				//医生发送过来的量表信息
+				vue.scaleMsg.splice(0);
+				for (let i = 0; i < data.data.length; i++) {
+					let obj = {};
+					obj.id = data.data[i].aiScaleId;
+					obj.name = data.data[i].aiScaleName;
+					/**
+					 * 设置页面所需url
+					 */
+					vue.webs.push(vue.pages[obj.id] + USER_ID);
+					vue.scaleMsg.push(obj); //量表信息
+					vue.scaleNumbers.push(obj.id); //量表顺序
+				}
+				vue.ststus.push(5)
+				vue.index = 0;
+
+			} else if (data.status == 6) { //设置指导语
+				vue.guids = data.data;
+			} else if (data.status == 7) { //进入下一题
+				vue.itemPackage.splice(0);
+				vue.itemPackage.push(data.data)
+				console.log('接收数据包', vue.itemPackage);
+			} else if (data.status = -1) {
+				let a = JSON.stringify(data)
+				vue.noStatus = JSON.parse(a)
 			}
+		};
+		window.onbeforeunload = function() {
+			ws.close()
+			console.log('关闭')
 		}
-		
-		
+
 		function sendMsg(o) {
-			if(ws)
-				ws.send(JSON.stringify(o));
+			ws.send(JSON.stringify(o));
 		}
 	</script>
 

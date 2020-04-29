@@ -1,0 +1,284 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>神经心理辅助诊疗系统</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<!-- <link href="../css/mui.min.css" rel="stylesheet" /> -->
+		<link href="../css/init.css" rel="stylesheet" />
+		<link href="../css/menue.css" rel="stylesheet" />
+		<!-- <script src="../js/mui.min.js"></script> -->
+		<script src="../js/config.js"></script>
+		<script src="../js/toJump.js"></script>
+		<!-- <script src="../js/vue.min.js"></script> -->
+		<script src="../js/vue.js"></script>
+		<script src="../js/jquery.min.js"></script>
+	</head>
+	<body style="overflow: hidden;">
+		<img id="bg" src="../images/poster-about.jpg" />
+		<div id="content" class="vue">
+			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog"></div>
+			<div v-cloak v-bind:class="[isDialog.length>0?'on':'off']" class="dialog-content">
+				<div v-bind:class="[isDialog.indexOf(5)>-1?'on-flex':'off']" class="dialog-scaleMsg">
+					<div class="dialog-content-title">您即将需要完成以下测验</div>
+					<img src="../svg/smail.svg" alt="" style="margin-top: 10px;">
+					<ul class="scale-list">
+						<li v-for="(it,index) in scaleMsg">{{it.name}}</li>
+					</ul>
+					<div class="dialog-close" v-on:click="closeDialog(5)">
+						确定
+					</div>
+				</div>
+			</div>
+			<div id="test" v-on:click="startTest()">
+				开始评估
+			</div>
+			<div id="history" v-on:click="getHistory()">
+				历史报告
+			</div>
+			<object class="menue-obj" :data="webs[pos]" id="html-box" :style="styles.pageZindex" v-if="webs.length>0 && isReady "></object>
+			<!-- <object class="menue-obj" :data="Npage[1]" id="html-box" :style="styles.pageZindex"></object> -->		
+		</div>
+		<!-- <button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;z-index: 1000;">刷新</button> -->
+		<script>
+			function a() {
+				location.reload(true)
+			}
+		</script>
+	</body>
+	<!-- 页面状态值说明：5->打开量表信息弹窗, 4->重新设置当前页面  -->
+	<script>
+		//const USER_ID = window.location.search.split('?')[1].split(0, 1).join("");
+		let uuu = sessionStorage.getItem('user');
+		if(uuu==null||uuu==undefined){
+			location.href = '../login.html'
+		}
+		let USER_ID = JSON.parse(uuu).id;
+		//var url = 'user_clock.html?' + USER_ID;
+		var vue = new Vue({
+			el: '.vue',
+			data: {
+				a: '',
+				b: '',
+				docId: "22", //默认为空字符串
+				pages: null,
+				fastData: [], //子页面需要的即时数据
+				itemPackage: [], //子页面数据包
+				scaleNumbers: [], //量表顺序编号
+				index: '', //当前编号
+				isDialog: [], //弹窗设置
+				scaleMsg: [], //弹窗显示的量表信息
+				ststus: [], //消息状态
+				Npage: [], //当前量表页,index = 0为量表id,index = 1 为量表url
+				guids: "", //ws接受的指导语
+				styles: {
+					pageZindex: {
+						zIndex: -3,
+					},
+					visi_hid: {
+						visibility: "hidden"
+					},
+					visi_visi: {
+						visibility: "visible"
+					}
+				},
+				scale_R: { //各个量表子页面的结果对象,直接发送到服务器，由服务器判断是否需要在服务器中处理
+					'20': '',
+				},
+				dataPackage: {},
+				pos:0,//当前网页位置
+				webs:[]	,//网页url
+				noStatus:null,	//websocket接收的没有状态属性的数据
+				isReady:false,	//为true才打开子窗口
+			},
+			created() {
+				this.pages = $.ajax({
+					url: "../JSON/urlConfig.json",
+					async: false
+				}).responseJSON.pages;
+				
+				
+				
+			},
+			watch: {
+				scale_R: {
+					handler(a, b) {
+						this.getHistory()
+						this.a = a;
+						this.b = b;
+					},
+					deep: true,
+					immediate: false
+				},
+				dataPackage: {
+					handler(a, b) {
+						console.log('menue修改', a, b)
+					},
+					deep: true,
+					immediate: false
+				}
+			},
+			methods: {
+				//关闭弹窗
+				closeDialog: function(e) {
+					let ind = this.isDialog.indexOf(e);
+					if (ind > -1)
+						this.isDialog.splice(ind, 1);
+					if (e == 5)
+						this.testPages();
+						this.styles.pageZindex.zIndex = 3;
+					this.isReady = true;
+				},
+				/**
+				 * 点击开始测评
+				 */
+				startTest: function() {
+					// this.Npage.push("15");
+					// this.Npage.push("user_CWT.html?222");
+					//this.styles.pageZindex.zIndex = 3;
+					/**
+					 * 打开题目信息弹窗
+					 * 
+					 */
+					
+					console.log(this.webs,'当前待使用的页面')
+					let ind = this.isDialog.indexOf(5);
+					let ind2 = this.ststus.indexOf(5)
+					if (ind2 > -1) {
+						this.isDialog.push(5);
+						this.ststus.splice(ind2, 1);
+						// this.styles.pageZindex.zIndex = 3;
+					} else if (ind > -1){
+						this.isDialog.splice(ind, 1);
+						// this.styles.pageZindex.zIndex = 3;
+					}	
+					else if (ind2 < 0) {
+						alert("现在还没有评估")
+					}
+				},
+				/**
+				 * 关闭量表信息提示后开始进入第一个量表测验
+				 */
+				testPages: function() {
+					console.log(this.scaleMsg, "scaleMsg");
+					this.Npage.splice(0);
+					this.pages[this.scaleNumbers[this.index]]; //获取第一个量表的id,并从pages中获取url；
+					this.Npage.push(this.scaleNumbers[this.index]); //id号
+					this.Npage.push(this.pages[this.scaleNumbers[this.index]]); //url
+					if (this.Npage.length > 0)
+						this.styles.pageZindex.zIndex = 3;
+				},
+				/**
+				 * @param {Object} e根据url获取html文本（应该不用）
+				 */
+				getPage: function(e) {
+					let html = $.ajax({
+						url: e,
+						async: false
+					});
+					return html.responseText;
+				},
+				/**
+				 * 获取历史报告记录
+				 */
+				getHistory: function() {
+					PageR();
+				},
+
+				/**
+				 * 处理子页面传过来的结果，并发送给服务器，通过websocket发送，要使用定义的数据包格式
+				 */
+				PageR: function() {
+					let r = vue.scale_R; //从vue中获取数据
+					//发送数据
+					sendMsg(r);
+				}
+			}
+		});
+		const ws = new WebSocket(config.wsURL + "/websocket/" + USER_ID);
+		ws.onopen = function(e) {
+			console.log('连接')
+		};
+		ws.onclose = function() {
+			//alert('关闭')
+			console.log('关闭')
+		};
+		ws.onerror = function() {
+			//alert('出错')
+			console.log('出错')
+		};
+		ws.onmessage = function(e) {
+			/**
+			 * status 说明
+			 * status = 1 ,子页面需要的即时数据
+			 * status = 2 ，接收数据为图片
+			 * status = 3 ，进入下一个量表
+			 * status = 4 , 初始值
+			 * status = 5 ，接受量表信息，ID号和名字
+			 * status = 6 ，设置指导语
+			 * status = 0 ，子页面所需数据包
+			 * status = 7 , 进入下一题
+			 * status = 8 ， 当前题目内容修改
+			 */
+			let data = JSON.parse(e.data)
+			console.log('有消息', data)
+			console.log(vue,'vue控制器')
+			if (data.status == 0) {	//设置子页面需要的数据包
+				vue.dataPackage = data.data;
+				if (data.data.guid) 
+				vue.guids = data.data.guid;
+			} else if (data.status == 1) {//设置即时数据
+				console.log(vue.fastData,'即时数据')
+				vue.fastData.splice(0);
+				vue.fastData.push(data.data)
+			} else if (data.status == 3) {
+				if(vue.pos+1>=vue.webs.length){
+					console.log('跳转到结束页面')
+					vue.webs.splice(0)
+					location.href = 'finish.html'
+					return
+				}
+				vue.pos++;
+			} 
+			else if (data.status == 5) {	//设置发布的量表信息
+				vue.docId = data.from_who;
+				//医生发送过来的量表信息
+				vue.scaleMsg.splice(0);
+				for (let i = 0; i < data.data.length; i++) {
+					let obj = {};
+					obj.id = data.data[i].aiScaleId;
+					obj.name = data.data[i].aiScaleName;
+					/**
+					 * 设置页面所需url
+					 */
+					vue.webs.push(vue.pages[obj.id]+USER_ID);
+					vue.scaleMsg.push(obj); //量表信息
+					vue.scaleNumbers.push(obj.id); //量表顺序
+				}
+				vue.ststus.push(5)
+				vue.index = 0;
+				
+			} 
+			else if (data.status == 6) {	//设置指导语
+				vue.guids = data.data;
+			} else if (data.status == 7) {	//进入下一题
+				vue.itemPackage.splice(0);
+				vue.itemPackage.push(data.data)
+				console.log('接收数据包', vue.itemPackage);
+			}else if(data.status = -1){
+				let a = JSON.stringify(data)
+				vue.noStatus = JSON.parse(a)
+			}
+		};
+		window.onbeforeunload = function() {
+			ws.close()
+			console.log('关闭')
+		}
+
+		function sendMsg(o) {
+			ws.send(JSON.stringify(o));
+		}
+	</script>
+
+
+</html>

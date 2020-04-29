@@ -12,8 +12,8 @@
 		<title>神经心理辅助诊疗系统</title>
 	</head>
 	<body>
-		<div class="content" style="overflow: hidden;">
-			<object v-if="testNo==4" :style="{display:(testNo==4?'initial':'none')}" data="user_clock.html" class="off Ifram" style="overflow: hidden;"></object>
+		<div class="content">
+			<object v-if="testNo==4" :style="{display:(testNo==4?'initial':'none')}" data="user_clock.html" class="off Ifram"></object>
 			<div class="page-content" v-else>
 				<div class="page-content-title">
 					<span class="title-blue">量表名称：{{titile}}</span>
@@ -24,11 +24,16 @@
 						{{titileName}}
 					</div>
 					<div class="mainMargin">
+						<div class="title-box-between">
+							<span>{{getGuids}}</span><span v-if="testNo==1">{{getTimer}}</span>
+						</div>
 						<div class="mainMargin-content stay-center">
-							<span v-if="testNo==1" class="font-large" style="color: #1070C1;">{{timerEnd?"":getFastData}}</span>
-							<img v-else-if="testNo==2" :src="getFastData.length>30?getFastData:'../images/space.png'" style="height: 60%;">
-							<span v-else-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
-							<div class="full" v-else-if="testNo==7">
+							<span v-if="testNo==1" class="font-large">{{timerEnd?"":getFastData}}</span>
+
+							<img v-if="testNo==2" :src="getFastData" height="400">
+
+							<span v-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
+							<div class="full" v-if="testNo==7">
 								<div v-if="ind_7==0" class="flex-colum-space-evenly full">
 									<ul class="flex-wrap word-content">
 										<li v-for="(it,index) in getWordGroup[0]" class="word-content-item"><span>{{it}}</span></li>
@@ -56,24 +61,22 @@
 									</li>
 								</ul>
 							</div>
-							<span v-else style="display: flex;flex-direction: column;justify-content: center;align-items: center;">
-								<img src="../images/svg/icon1.svg" />
-								<span style="color:rgb(16, 112, 193) ;font-size: 30px;margin-top: 20px;">请准备，马上开始答题</span>
-							</span>
 						</div>
 
 					</div>
 				</div>
 			</div>
 		</div>
-		<!-- <button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;">刷新</button> -->
+
+		<button type="button" id="a" onclick="a()" style="position: absolute;bottom: 10px;">刷新</button>
 		<script>
 			function a() {
-				location.reload(true)
-			}
+			location.reload(true)
+		}
 		</script>
 	</body>
 	<script>
+		
 		var vue = new Vue({
 			el: '.content',
 			data: {
@@ -93,22 +96,22 @@
 				selectF: [], //第七题错误选项被选
 				ind_7: 0, //阿尔茨海默第七题单词组下标
 				itemPic: true, //第四题画板插件显示示例图片
-				pac_4: {
-					f: null
+				pac_4:{
+					f:null
 				}
 			},
 			computed: {
 				getGuids: function() {
 					if (this.dataPackage[0])
-						if (this.dataPackage[0].aiQuestionGuid)
+						if(this.dataPackage[0].aiQuestionGuid)
 							return "指导语：" + this.dataPackage[0].aiQuestionGuid
-					else return null
+						else return null
 					else
 						return null
 				},
 				getFastData: function() {
-					if (this.fastData.length == 0)
-						return null
+					if(this.fastData.length==0)
+					return null
 					return this.fastData[0];
 				},
 				getDataPackAge: function() {
@@ -144,7 +147,7 @@
 					if (this.dataPackage[0])
 						return this.dataPackage[0].aiQuestionId;
 					else
-						return 0;
+						return 1;
 				},
 				getWordGroup: function() { //阿尔茨海默，第七题获取单词
 					if (this.dataPackage[0]) {
@@ -192,7 +195,7 @@
 							title: b,
 							value: a
 						},
-						dataOptions: 7
+						dataOptions:7
 					}
 					this.sendMsg(o);
 
@@ -221,7 +224,7 @@
 							this.selectT.splice(0);
 							this.selectF.splice(0);
 						}
-						if (this.testNo == 4) {
+						if(this.testNo == 4){
 							this.pac_4.f = this.fastData
 						}
 					},

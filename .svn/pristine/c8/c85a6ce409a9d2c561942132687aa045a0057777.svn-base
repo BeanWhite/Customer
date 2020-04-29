@@ -136,7 +136,7 @@
 		var isEraser = false;			//定义橡皮是否生效，默认禁止，橡皮和画笔只能同时生效一个，可以两个都禁止
 		var flag_img = 0;
 		var pen_color = 'black';
-		var pen_width = 3;
+		var pen_width = 2;
 		let dt; 
 		
 		var ratioX = bot.width / bot.offsetWidth, //比例
@@ -226,7 +226,7 @@
 				pencile.alt=1;
 				isPen = true;
 				pen_color = 'black';
-				pen_width = 3;
+				pen_width = 2;
 			}else{
 				pencile.src = '../svg/pen_gray.svg';
 				pencile.alt=0;

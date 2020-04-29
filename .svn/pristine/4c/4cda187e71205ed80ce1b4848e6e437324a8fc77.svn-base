@@ -26,7 +26,7 @@
 					<div class="mainMargin">
 						<div class="mainMargin-content stay-center">
 							<span v-if="testNo==1" class="font-large" style="color: #1070C1;">{{timerEnd?"":getFastData}}</span>
-							<img v-else-if="testNo==2" :src="getFastData.length>30?getFastData:'../images/space.png'" style="height: 60%;">
+							<img v-else-if="testNo==2" :src="getFastData" style="height: 60%;">
 							<span v-else-if="testNo==3||testNo==5||testNo==6||testNo>=8" class="text-black">本评估暂不需要您操作，请认真听医生的问题</span>
 							<div class="full" v-else-if="testNo==7">
 								<div v-if="ind_7==0" class="flex-colum-space-evenly full">

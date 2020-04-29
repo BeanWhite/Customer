@@ -95,7 +95,7 @@ function home(){
 	var isEraser = false;			//定义橡皮是否生效，默认禁止，橡皮和画笔只能同时生效一个，可以两个都禁止
 	var flag_img = 0;
 	var pen_color = 'black';
-	var pen_width = 3;
+	var pen_width = 2;
 	let dt=null; 	//send计时器
 	var C = $.ajax({
 		url:'../JSON/circle.json',
@@ -119,7 +119,7 @@ function home(){
 		bot.ontouchend = mouseUpAction;
 	}
 	$(document).ready(function(){
-		//init_canvas();
+		init_canvas();
 		dataURL = myCanvas.toDataURL();
 		imgStack.push({
 			dataURL:dataURL,
@@ -203,7 +203,7 @@ function home(){
 			pencile.alt=1;
 			isPen = true;
 			pen_color = 'black';
-			pen_width = 3;
+			pen_width = 2;
 	
 		}else{
 			pencile.src = '../svg/pen_gray.svg';

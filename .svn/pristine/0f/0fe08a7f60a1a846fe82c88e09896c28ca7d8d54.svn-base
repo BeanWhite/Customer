@@ -96,6 +96,7 @@
 					<div class="mui-input-row" style="height: 47px;">
 						<input id='account' type="text" class="mui-input-clear mui-input" placeholder="门诊号" style="text-align: center;height: 47px;">
 					</div>
+					
 					<input id='password' type="hidden"  value="2">
 				</form>
 				<button id='login' class="mui-btn mui-btn-block mui-btn-primary" style="margin-top: 20px;border-radius:5px ;height: 47px;line-height: 20px;">登录</button>
@@ -134,8 +135,6 @@
 								 */
 								sessionStorage.setItem('user',JSON.stringify(user));
 								window.location.href = "pages/menue.html?"+user.id;
-							}else{
-								alert(data.msg)
 							}
 							console.log(data)
 						},
